@@ -233,6 +233,17 @@ typedef struct {
 typedef sub_block * sub_block_list;
 
 
+typedef struct ops_kernel_descriptor
+{
+//  char        *name;     /* name of kernel */
+  ops_arg     *args;     /* list of arguments to pass in */
+  int         nargs;     /* number of arguments */
+  int           dim;     /* number of dimensions */
+  int      range[6];     /* execution range */
+  ops_block   block;     /* block to execute on */
+  void (*function)(struct ops_kernel_descriptor *desc); /* Function pointer to a wrapper to be called */
+} ops_kernel_descriptor;
+
 
 /*
 * min / max definitions
@@ -285,24 +296,13 @@ extern sub_block_list *OPS_sub_block_list;
 
 void ops_init( int argc, char **argv, int diags_level );
 void ops_exit();
-
-ops_dat ops_decl_dat_char(ops_block, int, int*, int*, int*, char *, int, char const*, char const* );
-ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size, int* offset, int* tail,
-                           char* data, int type_size, char const * type, char const * name );
-
-ops_arg ops_arg_dat( ops_dat dat, ops_stencil stencil, char const * type, ops_access acc );
-ops_arg ops_arg_dat_opt( ops_dat dat, ops_stencil stencil, char const * type, ops_access acc, int flag );
-ops_arg ops_arg_idx( );
-
-ops_arg ops_arg_gbl_char( char * data, int dim, int size, ops_access acc );
-void ops_decl_const_char( int, char const *, int, char *, char const* );
-
 void ops_init_core( int argc, char **argv, int diags_level );
-
 void ops_exit_core( void );
 
+/* ops_block */
 ops_block ops_decl_block(int dims, int *size, char *name);
 
+/* ops_dat */
 ops_dat ops_decl_dat_core( ops_block block, int data_size,
                       int *block_size, int* offset, int* tail, char *data, int type_size,
                       char const * type,
@@ -312,34 +312,57 @@ ops_dat ops_decl_dat_temp_core( ops_block block, int data_size,
                       int *block_size, int* offset,  int* tail, char * data, int type_size,
                       char const * type, char const * name );
 
-void ops_decl_const_core( int dim, char const * type, int typeSize, char * data, char const * name );
+ops_dat ops_decl_dat_char(ops_block, int, int*, int*, int*, char *, int, char const*, char const* );
+ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size, int* offset, int* tail,
+                      char* data, int type_size, char const * type, char const * name );
 
+
+/* ops_stencil */
 ops_stencil ops_decl_stencil( int dims, int points, int *stencil, char const * name);
 ops_stencil ops_decl_strided_stencil( int dims, int points, int *sten, int *stride, char const * name);
 
+/* ops_arg */
+ops_arg ops_arg_dat( ops_dat dat, ops_stencil stencil, char const * type, ops_access acc );
+ops_arg ops_arg_dat_opt( ops_dat dat, ops_stencil stencil, char const * type, ops_access acc, int flag );
+ops_arg ops_arg_idx( );
+ops_arg ops_arg_gbl_char( char * data, int dim, int size, ops_access acc );
 ops_arg ops_arg_dat_core( ops_dat dat, ops_stencil stencil, ops_access acc );
 ops_arg ops_arg_gbl_core( char * data, int dim, int size, ops_access acc );
 ops_arg ops_arg_idx_core( );
 
+/* constants */
+void ops_decl_const_char( int, char const *, int, char *, char const* );
+void ops_decl_const_core( int dim, char const * type, int typeSize, char * data, char const * name );
+
+/* misc functions */
 void ops_printf(const char* format, ...);
 void ops_fprintf(FILE *stream, const char *format, ...);
 
 void ops_diagnostic_output( );
 void ops_timing_output();
 
+int ops_is_root();
+
+void ops_partition(int dims, int* size, char* routine);
+
 void ops_timers( double *cpu, double *et );
 void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name);
 void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name);
+void ops_dump3(ops_dat dat, const char *name);
 
 void ops_timing_realloc ( int, const char * );
 void ops_timers_core( double *cpu, double *et );
-float ops_compute_transfer(int dims, int *range, ops_arg *arg);
 
+/*******************************************************************************
+* Internals
+*******************************************************************************/
+
+float ops_compute_transfer(int dims, int *range, ops_arg *arg);
 void ops_register_args(ops_arg *args, const char *name);
 int ops_stencil_check_2d(int arg_idx, int idx0, int idx1, int dim0, int dim1);
 int ops_stencil_check_3d(int arg_idx, int idx0, int idx1, int idx2, int dim0, int dim1);
 
-/* check if these should be placed here */
+/* keeping data up-to-date */
 void ops_set_dirtybit_host(ops_arg *args, int nargs); //data updated on host .. i.e. dirty on host
 void ops_set_halo_dirtybit(ops_arg *arg);
 void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range);
@@ -347,22 +370,20 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range);
 void ops_exchange_halo(ops_arg* arg, int d /*depth*/);
 void ops_exchange_halo2(ops_arg* arg, int* d_pos, int* d_neg /*depth*/);
 void ops_exchange_halo3(ops_arg* arg, int* d_pos, int* d_neg /*depth*/, int *iter_range);
-
 void ops_set_dirtybit_cuda(ops_arg *args, int nargs);
 void ops_H_D_exchanges(ops_arg *args, int nargs);
 void ops_H_D_exchanges_cuda(ops_arg *args, int nargs);
 
-int ops_is_root();
-
-void ops_partition(int dims, int* size, char* routine);
-
+/* reductions */
 void ops_mpi_reduce_float(ops_arg *args, float* data);
 void ops_mpi_reduce_double(ops_arg *args, double* data);
 void ops_mpi_reduce_int(ops_arg *args, int* data);
 
 void ops_compute_moment(double t, double *first, double *second);
 
-void ops_dump3(ops_dat dat, const char *name);
+/* lazy execution */
+void ops_enqueue_kernel(ops_kernel_descriptor *desc);
+void ops_execute();
 
 #ifdef __cplusplus
 }

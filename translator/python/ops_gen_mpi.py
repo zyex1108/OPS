@@ -197,19 +197,28 @@ def ops_gen_mpi(master, date, consts, kernels):
     code('#include "'+name2+'_kernel.h"')
     comm('')
     comm(' host stub function')
-    code('void ops_par_loop_'+name+'(char const *name, ops_block block, int dim, int* range,')
-    text = ''
-    for n in range (0, nargs):
-
-      text = text +' ops_arg arg'+str(n)
-      if nargs <> 1 and n != nargs-1:
-        text = text +','
-      else:
-        text = text +') {'
-      if n%n_per_line == 3 and n <> nargs-1:
-         text = text +'\n'
-    code(text);
+    code('void ops_par_loop_'+name+'_execute(ops_kernel_descriptor *desc) {')
     depth = 2
+    #code('char const *name = "'+name+'";')
+    code('ops_block block = desc->block;')
+    code('int dim = desc->dim;')
+    code('int *range = desc->range;')
+    for n in range (0, nargs):
+      code('ops_arg arg'+str(n)+' = desc->args['+str(n)+'];')
+    #code('void ops_par_loop_'+name+'(char const *name, ops_block block, int dim, int* range,')
+    # text = ''
+    # for n in range (0, nargs):
+    # 
+    #   text = text +' ops_arg arg'+str(n)
+    #   if nargs <> 1 and n != nargs-1:
+    #     text = text +','
+    #   else:
+    #     text = text +') {'
+    #   if n%n_per_line == 3 and n <> nargs-1:
+    #      text = text +'\n'
+    # code(text);
+    # depth = 2
+
 
     code('');
     code('char *p_a['+str(nargs)+'];')
@@ -389,7 +398,6 @@ def ops_gen_mpi(master, date, consts, kernels):
 
     FOR('n_x','start[0]+((end[0]-start[0])/SIMD_VEC)*SIMD_VEC','end[0]')
     #code('for(;n_x<(end[0]-start[0]);n_x++) {')
-    depth = depth+2
     comm('call kernel function, passing in pointers to data - remainder')
     text = name+'( '
     for n in range (0, nargs):
@@ -461,7 +469,52 @@ def ops_gen_mpi(master, date, consts, kernels):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('OPS_kernels['+str(nk)+'].transfer += ops_compute_transfer(dim, range, &arg'+str(n)+');')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_READ:
+        code('free(arg'+str(n)+'.data);')
+
     depth = depth - 2
+    code('}')
+    code('')
+    code('void ops_par_loop_'+name+'(char const *name, ops_block block, int dim, int* range,')
+    text = ''
+    for n in range (0, nargs):
+
+      text = text +' ops_arg arg'+str(n)
+      if nargs <> 1 and n != nargs-1:
+        text = text +','
+      else:
+        text = text +') {'
+      if n%n_per_line == 3 and n <> nargs-1:
+         text = text +'\n'
+    code(text);
+    depth = 2
+    code('ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));')
+    #code('desc->name = (char *)malloc(strlen(name)+1);')
+    #code('strcpy(desc->name, name);')
+    #code('desc->name = name;')
+    code('desc->block = block;')
+    code('desc->dim = dim;')
+    if NDIM==2:
+      FOR('i','0','4')
+      code('desc->range[i] = range[i];')
+      ENDFOR()
+    elif NDIM==3:
+      FOR('i','0','6')
+      code('desc->range[i] = range[i];')
+      ENDFOR()
+    #code('desc->range = range;')
+    code('desc->nargs = '+str(nargs)+';')
+    code('desc->args = (ops_arg*)malloc('+str(nargs)+'*sizeof(ops_arg));')
+    for n in range (0, nargs):
+      code('desc->args['+str(n)+'] = arg'+str(n)+';')
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_READ:
+        code('char *tmp = (char*)malloc('+dims[n]+'*sizeof('+typs[n]+'));')
+        code('memcpy(tmp, arg'+str(n)+'.data,'+dims[n]+'*sizeof('+typs[n]+'));')
+        code('desc->args['+str(n)+'].data = tmp;')
+    code('desc->function = ops_par_loop_'+name+'_execute;')
+    code('ops_enqueue_kernel(desc);')
+    depth = 0
     code('}')
 
 ##########################################################################

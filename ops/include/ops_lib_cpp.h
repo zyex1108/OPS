@@ -96,6 +96,20 @@ void ops_decl_const ( char const * name, int dim, char const * type, T * data )
   }
 }
 
+template < class T >
+void ops_update_const ( char const * name, int dim, char const * type, T * data )
+{
+  (void)dim;
+  if ( type_error ( data, type ) )
+  {
+    printf ( "incorrect type specified for constant in op_decl_const" );
+    exit ( 1 );
+  }
+  ops_execute();
+  ops_decl_const_char ( dim, type, sizeof ( T ), (char *) data, name );
+}
+
+
 /*template < class T >
 ops_dat ops_decl_dat ( ops_block block, int data_size,
                       int *block_size, int* offset, T *data,
