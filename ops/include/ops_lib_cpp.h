@@ -109,6 +109,17 @@ void ops_update_const ( char const * name, int dim, char const * type, T * data 
   ops_decl_const_char ( dim, type, sizeof ( T ), (char *) data, name );
 }
 
+template < class T >
+void ops_reduction_result(ops_reduction handle, T *ptr) {
+  if ( type_error ( ptr, handle->type ) )
+  {
+    printf ( "incorrect type specified for constant in op_decl_const" );
+    exit ( 1 );
+  }
+  ops_execute();
+  memcpy(ptr, handle->data, handle->size);
+  handle->initialized = 0;
+}
 
 /*template < class T >
 ops_dat ops_decl_dat ( ops_block block, int data_size,

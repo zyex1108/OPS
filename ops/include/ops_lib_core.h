@@ -232,6 +232,15 @@ typedef struct {
 
 typedef sub_block * sub_block_list;
 
+typedef struct {
+  char       *data;        /* The data */
+  int         size;        /* size of data in bytes */
+  int         initialized; /* flag indicating whether data has been initialized*/
+  ops_access  acc;         /* Type of reduction it was used for last time */
+  const char *type;        /* Type */
+  const char *name;        /* Name */
+} ops_reduction_core;
+typedef ops_reduction_core * ops_reduction;
 
 typedef struct ops_kernel_descriptor
 {
@@ -316,6 +325,7 @@ ops_dat ops_decl_dat_char(ops_block, int, int*, int*, int*, char *, int, char co
 ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size, int* offset, int* tail,
                       char* data, int type_size, char const * type, char const * name );
 
+ops_reduction ops_decl_reduction_handle(int size, const char *type, const char *name);
 
 /* ops_stencil */
 ops_stencil ops_decl_stencil( int dims, int points, int *stencil, char const * name);
@@ -327,6 +337,7 @@ ops_arg ops_arg_dat_opt( ops_dat dat, ops_stencil stencil, char const * type, op
 ops_arg ops_arg_idx( );
 ops_arg ops_arg_gbl_char( char * data, int dim, int size, ops_access acc );
 ops_arg ops_arg_dat_core( ops_dat dat, ops_stencil stencil, ops_access acc );
+ops_arg ops_arg_reduce ( ops_reduction handle, int dim, const char *type, ops_access acc);
 ops_arg ops_arg_gbl_core( char * data, int dim, int size, ops_access acc );
 ops_arg ops_arg_idx_core( );
 
