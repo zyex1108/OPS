@@ -101,7 +101,7 @@ void calc_dt(double* local_dt, char* local_control,
     ops_printf("x, y                 : %lf, %lf\n",*xl_pos,*xl_pos);
     ops_printf("timestep : %lf\n",*local_dt);
 
-    double output[12] = {0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
+    /*double output[12] = {0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
     ops_par_loop(calc_dt_kernel_print, "calc_dt_kernel_print", clover_grid, 2,rangexy_getpoint,
       ops_arg_dat(xvel0, S2D_10_M10_01_0M1, "double", OPS_READ),
       ops_arg_dat(yvel0, S2D_10_M10_01_0M1, "double", OPS_READ),
@@ -118,7 +118,7 @@ void calc_dt(double* local_dt, char* local_control,
     ops_printf("%E, %E \n",output[6],output[7]); //xvel0(jldt  ,kldt+1),yvel0(jldt  ,kldt+1)
 
     ops_printf("density, energy, pressure, soundspeed = %lf, %lf, %lf, %lf \n",
-        output[8], output[9], output[10], output[11]);
+        output[8], output[9], output[10], output[11]);*/
   }
 
   if(dtl_control == 1) sprintf(local_control, "sound");

@@ -33,11 +33,12 @@ ifdef DEBUG
   CCFLAGS	= -O0 -g -no-prec-div -openmp -fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK #-DOPS_DEBUG
 else
   #CCFLAGS	= -O3 -ipo -no-prec-div -fp-model strict -fp-model source -prec-div -prec-sqrt -vec-report2 -xSSE4.2 -parallel #-DCOMM_PERF #-DDEBUG
-  CCFLAGS	= -O3 -ipo -no-prec-div -restrict -fno-alias -fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK#-vec-report
+  CCFLAGS	= -O3 -ipo -no-prec-div -restrict -fno-alias -fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK -vec-report
 endif
   CPPFLAGS	= $(CCFLAGS)
   OMPFLAGS	= -openmp -openmp-report2
   MPICPP	= $(MPI_INSTALL_PATH)/bin/mpicxx
+  MPICC		= $(MPI_INSTALL_PATH)/bin/mpicc -std=c99
   MPIFLAGS	= $(CCFLAGS)
 else
 ifeq ($(OPS_COMPILER),mic)
@@ -51,6 +52,7 @@ else
 endif
   CPPFLAGS	= $(CCFLAGS)
   OMPFLAGS	= -openmp -openmp-report2
+  MPICC		= $(MPI_INSTALL_PATH)/bin/mpicc
   MPICPP	= $(MPI_INSTALL_PATH)/bin/mpicxx
   MPIFLAGS	= $(CCFLAGS)
   OPENCL_LIB = -L$(OPENCL_INSTALL_PATH)/lib64 -lintelocl -lOpenCL #for offload opencl execution on the phi
@@ -118,7 +120,7 @@ endif
 # master to make all versions
 #
 
-TARGETS = cloverleaf_dev_seq cloverleaf_dev_mpi cloverleaf_mpi cloverleaf_mpi_openmp cloverleaf_openmp cloverleaf_seq cloverleaf_cuda cloverleaf_mpi_cuda cloverleaf_opencl #cloverleaf_openacc cloverleaf_mpi_openacc 
+TARGETS = cloverleaf_dev_seq cloverleaf_dev_mpi cloverleaf_mpi cloverleaf_mpi_openmp cloverleaf_openmp cloverleaf_seq cloverleaf_cuda cloverleaf_mpi_cuda cloverleaf_opencl cloverleaf_openmp_phi #cloverleaf_openacc cloverleaf_mpi_openacc 
 
 ifeq ($(OPS_COMPILER),pgi)
 TARGETS += cloverleaf_openacc cloverleaf_mpi_openacc
@@ -359,8 +361,45 @@ openacc_error:
 
 
 #
+#OpenMP for Xeon Phi
+#
+OMP_PHI_KERNELS = clover_leaf_phi_kernels.cpp
+
+openmp_phi_obj_list = $(shell find MPI_OpenMP_XeonPhi/ -name "*.cpp" | sed s/\\.cpp/\\.o/g | tr "\n" " ")
+openmp_phi_c_obj_list = $(shell find MPI_OpenMP_XeonPhi/ -name "*_c.c" | sed s/\\.c/\\.o/g | tr "\n" " ")
+
+./MPI_OpenMP_XeonPhi/clover_leaf_phi_kernels.o: ./MPI_OpenMP_XeonPhi/clover_leaf_phi_kernels.cpp ./MPI_OpenMP_XeonPhi/clover_leaf_common.h Makefile
+	$(MPICPP) $(OMPFLAGS) $(MPIFLAGS) $(OPS_INC) \
+        -I. MPI_OpenMP_XeonPhi/clover_leaf_phi_kernels.cpp -c -o MPI_OpenMP_XeonPhi/clover_phi_leaf_kernels.o
+
+./MPI_OpenMP_XeonPhi/%.o: ./MPI_OpenMP_XeonPhi/%.cpp ./MPI_OpenMP_XeonPhi/%_c.c ./MPI_OpenMP_XeonPhi/clover_leaf_common.h Makefile                         
+	@echo "Compiling kernel" $(MPICC) $*
+	$(MPICC) $(OMPFLAGS) $(MPIFLAGS) $(OPS_INC) -I. MPI_OpenMP_XeonPhi/$*_c.c -c -o MPI_OpenMP_XeonPhi/$*_c.o
+	$(MPICPP) $(OMPFLAGS) $(MPIFLAGS) $(OPS_INC) -I. MPI_OpenMP_XeonPhi/$*.cpp -c -o MPI_OpenMP_XeonPhi/$*.o
+
+cloverleaf_openmp_phi: $(openmp_phi_obj_list) clover_leaf.cpp start.cpp build_field.cpp read_input.cpp initialise_chunk_ops.cpp \
+                initialise.cpp generate.cpp ideal_gas_ops.cpp \
+                update_halo_ops.cpp field_summary_ops.cpp time_step.cpp viscosity_ops.cpp \
+                calc_dt_ops.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp flux_calc_ops.cpp \
+                advection.cpp advec_cell_ops.cpp advec_mom_ops.cpp reset_field_ops.cpp \
+                initialise_chunk_kernel.h generate_chunk_kernel.h ideal_gas_kernel.h \
+                update_halo_kernel.h field_summary_kernel.h viscosity_kernel.h \
+                PdV_kernel.h revert_kernel.h accelerate_kernel.h flux_calc_kernel.h \
+                reset_field_kernel.h advec_cell_kernel.h advec_mom_kernel.h Makefile
+	        $(MPICPP) $(OMPFLAGS) $(MPIFLAGS) $(OPS_INC) $(OPS_LIB) \
+                clover_leaf.cpp start.cpp build_field.cpp \
+                read_input.cpp initialise_chunk_ops.cpp initialise.cpp generate.cpp \
+                ideal_gas_ops.cpp update_halo_ops.cpp field_summary_ops.cpp time_step.cpp \
+                viscosity_ops.cpp calc_dt_ops.cpp PdV_ops.cpp revert_ops.cpp accelerate_ops.cpp \
+                flux_calc_ops.cpp advection.cpp reset_field_ops.cpp advec_cell_ops.cpp \
+                advec_mom_ops.cpp -I. $(openmp_phi_obj_list) $(openmp_phi_c_obj_list) -lops_openmp -o cloverleaf_openmp_phi
+
+
+
+
+#
 # cleanup
 #
 
 clean:
-		rm -f cloverleaf_dev_seq cloverleaf_dev_mpi cloverleaf_mpi cloverleaf_seq cloverleaf_openmp cloverleaf_mpi_openmp cloverleaf_cuda cloverleaf_mpi_cuda cloverleaf_openacc cloverleaf_mpi_openacc ./CUDA/*.o ./OpenACC/*.o *.o cloverleaf_opencl ./OpenCL/*.o *.o
+		rm -f cloverleaf_dev_seq cloverleaf_dev_mpi cloverleaf_mpi cloverleaf_seq cloverleaf_openmp cloverleaf_mpi_openmp cloverleaf_cuda cloverleaf_mpi_cuda cloverleaf_openacc cloverleaf_mpi_openacc cloverleaf_openmp_phi ./CUDA/*.o ./OpenACC/*.o *.o cloverleaf_opencl ./OpenCL/*.o *.o
