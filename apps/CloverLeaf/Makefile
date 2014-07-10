@@ -370,7 +370,7 @@ openmp_phi_c_obj_list = $(shell find MPI_OpenMP_XeonPhi/ -name "*_c.c" | sed s/\
 
 ./MPI_OpenMP_XeonPhi/clover_leaf_phi_kernels.o: ./MPI_OpenMP_XeonPhi/clover_leaf_phi_kernels.cpp ./MPI_OpenMP_XeonPhi/clover_leaf_common.h Makefile
 	$(MPICPP) $(OMPFLAGS) $(MPIFLAGS) $(OPS_INC) \
-        -I. MPI_OpenMP_XeonPhi/clover_leaf_phi_kernels.cpp -c -o MPI_OpenMP_XeonPhi/clover_phi_leaf_kernels.o
+        -I. MPI_OpenMP_XeonPhi/clover_leaf_phi_kernels.cpp -c -o MPI_OpenMP_XeonPhi/clover_leaf_phi_kernels.o
 
 ./MPI_OpenMP_XeonPhi/%.o: ./MPI_OpenMP_XeonPhi/%.cpp ./MPI_OpenMP_XeonPhi/%_c.c ./MPI_OpenMP_XeonPhi/clover_leaf_common.h Makefile                         
 	@echo "Compiling kernel" $(MPICC) $*
