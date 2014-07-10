@@ -117,7 +117,7 @@ def ENDIF():
 def mult(text, i, n):
   text = text + '1'
   for nn in range (0, i):
-    text = text + '* args['+str(n)+'].dat->block_size['+str(nn)+']'
+    text = text + '* args['+str(n)+'].dat->size['+str(nn)+']'
 
   return text
 
@@ -651,40 +651,44 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
         text = text +'\n                    '
     code(text);
 
-    code('sub_block_list sb = OPS_sub_block_list[Block->index];')
+    comm('compute locally allocated range for the sub-block')
 
-    comm('compute localy allocated range for the sub-block')
-
-    code('int start_add['+str(NDIM)+'];')
-    code('int end_add['+str(NDIM)+'];')
+    code('int start['+str(NDIM)+'];')
+    code('int end['+str(NDIM)+'];')
 
 
+    code('#ifdef OPS_MPI')
+    code('#error this is not block, but dataset')
+    code('sub_block_list sb = OPS_sub_block_list[block->index];')
     FOR('n','0',str(NDIM))
-    code('start_add[n] = sb->istart[n];end_add[n] = sb->iend[n]+1;')
-    IF('start_add[n] >= range[2*n]')
-    code('start_add[n] = 0;')
+    code('start[n] = sb->gbl_disp[n];end[n] = sb->gbl_disp[n]+sb->gbl_size[n];')
+    IF('start[n] >= range[2*n]')
+    code('start[n] = 0;')
     ENDIF()
     ELSE()
-    code('start_add[n] = range[2*n] - start_add[n];')
+    code('start[n] = range[2*n] - start[n];')
     ENDIF()
-
-    IF('end_add[n] >= range[2*n+1]')
-    code('end_add[n] = range[2*n+1] - sb->istart[n];')
+    IF('end[n] >= range[2*n+1]')
+    code('end[n] = range[2*n+1] - sb->gbl_disp[n];')
     ENDIF()
     ELSE()
-    code('end_add[n] = sb->sizes[n];')
+    code('end[n] = sb->gbl_size[n];')
     ENDIF()
     ENDFOR()
-    code('')
+    code('#else //OPS_MPI')
+    FOR('n','0',str(NDIM))
+    code('start[n] = range[2*n];end[n] = range[2*n+1];')
+    ENDFOR()
+    code('#endif //OPS_MPI')
 
     code('')
-    code('int x_size = end_add[0]-start_add[0];')
-    code('int y_size = end_add[1]-start_add[1];')
+    code('int x_size = end[0]-start[0];')
+    code('int y_size = end[1]-start[1];')
     code('')
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('int xdim'+str(n)+' = args['+str(n)+'].dat->block_size[0]*args['+str(n)+'].dat->dim;')
+        code('int xdim'+str(n)+' = args['+str(n)+'].dat->size[0]*args['+str(n)+'].dat->dim;')
     code('')
 
     comm('build opencl kernel if not already built')
@@ -800,7 +804,7 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
     #set up initial pointers    
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('int dat'+str(n)+' = args['+str(n)+'].dat->size;')
+        code('int dat'+str(n)+' = args['+str(n)+'].dat->elem_size;')
 
 
     comm('')
@@ -808,17 +812,17 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
       if arg_typ[n] == 'ops_arg_dat':
         comm('set up initial pointers')
         code('int base'+str(n)+' = 1 * ')
-        code('(start_add[0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->offset[0]);')
+        code('(start[0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->base[0] - args['+str(n)+'].dat->d_m[0]);')
         for d in range (1, NDIM):
-          code('base'+str(n)+' = base'+str(n)+' + args['+str(n)+'].dat->block_size['+str(d-1)+'] * ')
-          code('(start_add['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->offset['+str(d)+']);')
+          code('base'+str(n)+' = base'+str(n)+' + args['+str(n)+'].dat->size['+str(d-1)+'] * ')
+          code('(start['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->base['+str(d)+'] - args['+str(n)+'].dat->d_m['+str(d)+']);')
 
         #code('base'+str(n)+' = base'+str(n)+'/dat'+str(n)+';')
         code('')
         
 
     code('')
-    code('ops_H_D_exchanges_cuda(args, '+str(nargs)+');')
+    code('ops_H_D_exchanges_device(args, '+str(nargs)+');')
     #code('ops_halo_exchanges(args,'+str(nargs)+',range);')
     code('')    
     code('ops_timers_core(&c1,&t1);')
@@ -905,8 +909,7 @@ void buildOpenCLKernels_"""+kernel_name_list[nk]+"""("""+arg_text+""") {
         code('arg'+str(n)+'.data = (char *)arg'+str(n)+'h;')
         code('')
 
-    code('ops_set_dirtybit_opencl(args, '+str(nargs)+');')
-    #code('ops_H_D_exchanges(args, '+str(nargs)+');')
+    code('ops_set_dirtybit_device(args, '+str(nargs)+');')
 
     code('')
     comm('Update kernel record')
