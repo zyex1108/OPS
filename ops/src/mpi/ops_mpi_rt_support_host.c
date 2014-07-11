@@ -38,3 +38,9 @@ void ops_set_dirtybit_opencl(ops_arg *args, int nargs)
   (void)nargs;
   (void)args;
 }
+
+void ops_cpHostToDevice(void ** data_d, void ** data_h, int size ) {
+  (void)data_d;
+  (void)data_h;
+  (void)size;
+}
