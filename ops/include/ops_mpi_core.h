@@ -84,7 +84,7 @@ typedef struct
   int         count;       /* number of blocks */
   int         blocklength; /*size of blocks */
   int         stride;      /*stride between blocks */
-} ops_halo;
+} ops_int_halo;
 
 //
 //Struct for holding the decomposition details of a dat on an MPI process
@@ -98,7 +98,7 @@ typedef struct {
   //MPI Types for send/receive -- these should be defined for the dat, not the block
   MPI_Datatype* mpidat;
   //data structures describing halo access
-  ops_halo* halos;
+  ops_int_halo* halos;
   // the size of the local sub-block in each dimension, "owned"
   int decomp_size[OPS_MAX_DIM];
   // the displacement from the start of the block in each dimension
@@ -139,8 +139,8 @@ void ops_mpi_exit();
 /*******************************************************************************
 * External functions defined in ops_mpi_(cuda)_rt_support.c
 *******************************************************************************/
-void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest, const ops_halo *__restrict halo);
-void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src, const ops_halo *__restrict halo);
+void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest, const ops_int_halo *__restrict halo);
+void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src, const ops_int_halo *__restrict halo);
 
 #ifdef __cplusplus
 }
