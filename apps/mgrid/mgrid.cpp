@@ -57,11 +57,13 @@ int main(int argc, char **argv)
 
   //declare blocks
   ops_block grid0 = ops_decl_block(2, "grid0");
-  ops_block grid1 = ops_decl_block(2, "grid1");
+  
 
   //declare stencils
   int s2D_00[]         = {0,0};
   ops_stencil S2D_00 = ops_decl_stencil( 2, 1, s2D_00, "00");
+  
+  //need strided restrict stencil
 
   //declare datasets
   int d_p[2] = {2,2}; //max halo depths for the dat in the possitive direction
@@ -71,8 +73,7 @@ int main(int argc, char **argv)
   double* temp = NULL;
 
   ops_dat data0 = ops_decl_dat(grid0, 1, size, base, d_m, d_p, temp, "double", "data0");
-  ops_dat data1 = ops_decl_dat(grid1, 1, size, base, d_m, d_p, temp, "double", "data1");
-
+  ops_dat data1 = ops_decl_dat(grid1, 1, size, base, d_m, d_p, temp, "double", "data1"); //needs stride fields, half the size
 
   ops_partition("");
 
@@ -84,13 +85,29 @@ int main(int argc, char **argv)
 
   //populate
   int iter_range[] = {0,10,0,10};
+  int iter_range_small[] = {0,5,0,5};
+  
   ops_par_loop(mgrid_populate_kernel, "mgrid_populate_kernel", grid0, 2, iter_range,
                ops_arg_dat(data0, S2D_00, "double", OPS_WRITE),
                ops_arg_idx());
-  ops_par_loop(mgrid_populate_kernel, "mgrid_populate_kernel", grid1, 2, iter_range,
+  ops_par_loop(mgrid_populate_kernel, "mgrid_populate_kernel", grid0, 2, iter_range_small,   //operates on a smaller range
                ops_arg_dat(data1, S2D_00, "double", OPS_WRITE),
                ops_arg_idx());
 
+  
+  //do restriction loop
+  ops_par_loop(mgrid_restrict_kernel, "mgrid_restrict_kernel", grid0, 2, iter_range_small, 
+               ops_arg_dat(data0, S2D_STR2_00_M10_P10, "double", OPS_READ),
+               ops_arg_dat(data1, S2D_00, "double", OPS_WRITE),
+               ops_arg_idx());
+  
+  //do prolongation loop
+  ops_par_loop(mgrid_prolong_kernel, "mgrid_prolong_kernel", grid0, 2, iter_range, 
+               ops_arg_dat(data1, S2D_STP2_00_P10, "double", OPS_READ),
+               ops_arg_dat(data0, S2D_00, "double", OPS_WRITE),
+               ops_arg_idx());
+  
+  
   ops_print_dat_to_txtfile(data0, "data0.txt");
   ops_print_dat_to_txtfile(data1, "data1.txt");
 
