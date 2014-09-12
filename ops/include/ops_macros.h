@@ -99,6 +99,16 @@
 #define OPS_ACC15(x,y) (x+xdim15*(y))
 #define OPS_ACC16(x,y) (x+xdim16*(y))
 #define OPS_ACC17(x,y) (x+xdim17*(y))
+
+//multi-grid macros
+//#define OPS_ACCP0(x,y) (idx[1]*stride_y+(y))*xdim0 + idx[0]*stride_x+(x) //prolongate
+//#define OPS_ACCR0(x,y) (idx[1]/stride_y+(y))*xdim0 + idx[0]/stride_x+(x) //restrict
+
+//#define OPS_ACCR0(x,y) (x) //restrict
+
+
+
+
 #else
 
 #define OPS_ACC0(x,y) (ops_stencil_check_2d(0, x, y, xdim0, -1))

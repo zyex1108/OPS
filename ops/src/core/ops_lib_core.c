@@ -237,7 +237,7 @@ void ops_decl_const_core( int dim, char const * type, int typeSize, char * data,
 }
 
 ops_dat ops_decl_dat_core( ops_block block, int dim,
-                      int *dataset_size, int* base, int* d_m, int* d_p, char *data, int type_size,
+                      int *dataset_size, int* base, int* d_m, int* d_p, int stride, char *data, int type_size,
                       char const * type,
                       char const * name )
 {
@@ -318,7 +318,7 @@ ops_dat ops_decl_dat_core( ops_block block, int dim,
 
 
 ops_dat ops_decl_dat_temp_core ( ops_block block, int dim,
-  int *dataset_size, int* base, int* d_m, int* d_p, char * data, int type_size, char const * type, char const * name )
+  int *dataset_size, int* base, int* d_m, int* d_p, int stride, char * data, int type_size, char const * type, char const * name )
 {
   //Check if this dat already exists in the double linked list
   ops_dat found_dat = search_dat(block, dim, dataset_size, base, type, name);
@@ -327,7 +327,7 @@ ops_dat ops_decl_dat_temp_core ( ops_block block, int dim,
     exit(2);
   }
   //if not found ...
-  return ops_decl_dat_core ( block, dim, dataset_size, base, d_m, d_p, data, type_size, type, name );
+  return ops_decl_dat_core ( block, dim, dataset_size, base, d_m, d_p, stride, data, type_size, type, name );
 }
 
 
