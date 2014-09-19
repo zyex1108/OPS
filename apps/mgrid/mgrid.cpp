@@ -41,7 +41,7 @@
 #include <math.h>
 
 // OPS header file
-#include "ops_seq.h"
+#include "ops_seq_mgrid.h"
 
 #include "mgrid_populate_kernel.h"
 
@@ -100,21 +100,9 @@ int main(int argc, char **argv)
                ops_arg_dat(data1, S2D_00, "double", OPS_WRITE),
                ops_arg_idx());
 
-  //ops_print_dat_to_txtfile(data0, "data.txt");
-  ops_print_dat_to_txtfile(data1, "data.txt");
-  
-  /*ops_par_loop(mgrid_restrict_kernel, "mgrid_restrict_kernel", grid0, 2, iter_range_small, 
-               ops_arg_dat(data0, S2D_STR2_00, "double", OPS_READ),
-               ops_arg_dat(data1, S2D_00, "double", OPS_WRITE),
-               ops_arg_idx());
-  
-  ops_print_dat_to_txtfile(data1, "data.txt");*/
-  
-  ops_print_dat_to_txtfile(data0, "data.txt");  
-  
-  ops_par_loop(mgrid_prolong_kernel, "mgrid_prolong_kernel", grid0, 2, iter_range_small, 
+  ops_par_loop(mgrid_prolong_kernel, "mgrid_prolong_kernel", grid0, 2, iter_range, 
                ops_arg_dat(data1, S2D_00, "double", OPS_READ),
-               ops_arg_dat(data0, S2D_STR2_00, "double", OPS_WRITE),
+               ops_arg_dat(data0, S2D_00, "double", OPS_WRITE),
                ops_arg_idx());
   
   ops_print_dat_to_txtfile(data0, "data.txt");  

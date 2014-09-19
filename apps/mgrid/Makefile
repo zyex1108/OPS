@@ -118,7 +118,7 @@ endif
 # master to make all versions
 #
 
-TARGETS = mgrid_dev_seq
+TARGETS = mgrid_seq
 # mgrid_dev_mpi mgrid_mpi mgrid_mpi_openmp mgrid_openmp mgrid_seq mgrid_cuda mgrid_mpi_cuda mgrid_opencl #mgrid_openacc mgrid_mpi_openacc
 
 ifeq ($(OPS_COMPILER),pgi)
