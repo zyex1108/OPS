@@ -51,9 +51,18 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
   ops_register_args(args, "mgrid_prolong_kernel");
   #endif
 
+  
+  
+  int start_0[2];
+  int end_0[2];
+  start_0[0]= start[0]/2;
+  start_0[1]= start[1]/2;
+  end_0[0]= end[0]/2;
+  end_0[1]= end[1]/2;
+  
   offs[0][0] = args[0].stencil->stride[0]*1;  //unit step in x dimension
-  offs[0][1] = off2D(1, &start[0],
-      &end[0],args[0].dat->size, args[0].stencil->stride) - offs[0][0];
+  offs[0][1] = off2D(1, &start_0[0],
+      &end_0[0],args[0].dat->size, args[0].stencil->stride) - offs[0][0];
 
   offs[1][0] = args[1].stencil->stride[0]*1;  //unit step in x dimension
   offs[1][1] = off2D(1, &start[0],
@@ -128,7 +137,7 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
       //call kernel function, passing in pointers to data - remainder
       mgrid_prolong_kernel(  (double *)p_a[0], (double *)p_a[1], (int *)p_a[2] );
       //shift pointers to data x direction
-      p_a[0]= p_a[0] + (dat0 * off0_0) * (x%2 == 0?0:1);
+      p_a[0]= p_a[0] + (dat0 * off0_0) * ((n_x%2 == start[0]%2)?0:1);
       p_a[1]= p_a[1] + (dat1 * off1_0);
       arg_idx[0]++;
       x++;
@@ -141,11 +150,9 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
     #endif //OPS_MPI
     
     //shift pointers to data y direction
-    printf("y = %d, ymod2  = %d, off0_0 = %d, off0_1 = %d\n",y,y%2,off0_0,off0_1 );
-    if(y%2 == 0)
-      p_a[0]= p_a[0] - (dat0 * off0_0) * (5);
-    else
-      p_a[0]= p_a[0] + (dat0 * 4);//off0_1);
+    printf("y = %d, ymod2  = %d, off0_0 = %d, off0_1 = %d, end_0[1]-start_0[1] = %d\n",y,y%2,off0_0,off0_1,end_0[1]-start_0[1] );
+    (n_y%2 == start[1]%2)?p_a[0]= p_a[0] - (dat0 * off0_0) * (end_0[1]-start_0[1]):
+               p_a[0]= p_a[0] + (dat0 * off0_1);
     p_a[1]= p_a[1] + (dat1 * off1_1);
     
     arg_idx[1]++;
