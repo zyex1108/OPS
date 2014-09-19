@@ -42,11 +42,14 @@ int main(int argc, char **argv)
   int d_m[2] = {-2,-2};
   int size0[2] = {10, 10};
   int size1[2] = {5, 5};
+  int stride0[2] = {1, 1};
+  int stride1[2] = {2, 2};
+  
   int base[2] = {0,0};
   double* temp = NULL;
 
-  ops_dat data0 = ops_decl_dat(grid0, 1, size0, base, d_m, d_p, 1 , temp, "double", "data0");
-  ops_dat data1 = ops_decl_dat(grid0, 1, size1, base, d_m, d_p, 2 , temp, "double", "data1");
+  ops_dat data0 = ops_decl_dat(grid0, 1, size0, base, d_m, d_p, stride0 , temp, "double", "data0");
+  ops_dat data1 = ops_decl_dat(grid0, 1, size1, base, d_m, d_p, stride1 , temp, "double", "data1");
 
   ops_partition("");
 

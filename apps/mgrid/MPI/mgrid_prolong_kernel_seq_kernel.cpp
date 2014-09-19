@@ -50,15 +50,13 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
   #ifdef OPS_DEBUG
   ops_register_args(args, "mgrid_prolong_kernel");
   #endif
-
-  
-  
-  int start_0[2];
-  int end_0[2];
-  start_0[0]= start[0]/2;
-  start_0[1]= start[1]/2;
-  end_0[0]= end[0]/2;
-  end_0[1]= end[1]/2;
+    
+  int start_0[2]; int end_0[2]; int stride_0[2];
+  for(int n=0; n<2; n++) {
+    stride_0[n] = args[0].dat->stride[n];
+    start_0[n]  = start[n]/stride_0[n]; 
+    end_0[n]    = end[n]/stride_0[n];
+  }  
   
   offs[0][0] = args[0].stencil->stride[0]*1;  //unit step in x dimension
   offs[0][1] = off2D(1, &start_0[0],
@@ -96,11 +94,12 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d];
   #endif //OPS_MPI
+  printf("args[0].dat->stride[0] = %d\n",args[0].dat->stride[0]);
   int base0 = dat0 * 1 * 
-    ( (start[0]/2 /*prolong_stride*/) * args[0].stencil->stride[0] - args[0].dat->base[0] - d_m[0]);
+    ( (start[0]/stride_0[0] /*prolong_stride*/) * args[0].stencil->stride[0] - args[0].dat->base[0] - d_m[0]);
   base0 = base0+ dat0 *
     args[0].dat->size[0] *
-    ((start[1]/2 /*prolong_stride*/) * args[0].stencil->stride[1] - args[0].dat->base[1] - d_m[1]);
+    ((start[1]/stride_0[1] /*prolong_stride*/) * args[0].stencil->stride[1] - args[0].dat->base[1] - d_m[1]);
   p_a[0] = (char *)args[0].data + base0;
 
   #ifdef OPS_MPI
@@ -130,17 +129,14 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
   xdim1 = args[1].dat->size[0]*args[1].dat->dim;
 
   int n_x;
-  int x = 0;
-  int y = 0;
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
     for( n_x=start[0]; n_x<end[0]; n_x++ ){
       //call kernel function, passing in pointers to data - remainder
       mgrid_prolong_kernel(  (double *)p_a[0], (double *)p_a[1], (int *)p_a[2] );
       //shift pointers to data x direction
-      p_a[0]= p_a[0] + (dat0 * off0_0) * ((n_x%2 == start[0]%2)?0:1);
+      p_a[0]= p_a[0] + (dat0 * off0_0) * ((n_x % stride_0[0] == start[0]% stride_0[0])?0:1);
       p_a[1]= p_a[1] + (dat1 * off1_0);
       arg_idx[0]++;
-      x++;
     }
     
     #ifdef OPS_MPI
@@ -150,13 +146,13 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
     #endif //OPS_MPI
     
     //shift pointers to data y direction
-    printf("y = %d, ymod2  = %d, off0_0 = %d, off0_1 = %d, end_0[1]-start_0[1] = %d\n",y,y%2,off0_0,off0_1,end_0[1]-start_0[1] );
-    (n_y%2 == start[1]%2)?p_a[0]= p_a[0] - (dat0 * off0_0) * (end_0[1]-start_0[1]):
-               p_a[0]= p_a[0] + (dat0 * off0_1);
-    p_a[1]= p_a[1] + (dat1 * off1_1);
+    //printf("n_y = %d, n_ymod2  = %d, off0_0 = %d, off0_1 = %d, end_0[1]-start_0[1] = %d\n",
+    //      n_y,n_y%2,off0_0,off0_1,end_0[1]-start_0[1] );
     
+    (n_y % stride_0[1] == start[1] % stride_0[1])? p_a[0]= p_a[0] - (dat0 * off0_0) * (end_0[1]-start_0[1]):
+                           p_a[0]= p_a[0] + (dat0 * off0_1);
+    p_a[1]= p_a[1] + (dat1 * off1_1);
     arg_idx[1]++;
-    y++;
   }
   ops_timers_core(&c2,&t2);
   OPS_kernels[1].time += t2-t1;

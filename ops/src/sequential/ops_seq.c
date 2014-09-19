@@ -93,7 +93,7 @@ void ops_exit ()
 
 
 ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base, int* d_m,
-                           int* d_p, int stride, char* data,
+                           int* d_p, int* stride, char* data,
                            int type_size, char const * type, char const * name )
 {
 

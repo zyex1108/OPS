@@ -141,7 +141,7 @@ ops_dat ops_decl_dat ( ops_block block, int data_size,
 
 template < class T >
 ops_dat ops_decl_dat ( ops_block block, int data_size,
-                      int *block_size, int* base, int* d_m, int* d_p, int stride, T *data,
+                      int *block_size, int* base, int* d_m, int* d_p, int* stride, T *data,
                       char const * type,
                       char const * name )
 {

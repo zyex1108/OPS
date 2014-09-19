@@ -142,7 +142,7 @@ typedef struct
   int         dirty_hd;    /* flag to indicate dirty status on host and device */
   int         user_managed;/* indicates whether the user is managing memory */
   int         e_dat;       /* is this an edge dat?*/
-  int         stride;      /* stride > 1 if this dat is a coarse dat under multi-grid*/
+  int        stride[OPS_MAX_DIM];  /* stride[*] > 1 if this dat is a coarse dat under multi-grid*/
 } ops_dat_core;
 
 typedef ops_dat_core * ops_dat;
@@ -303,7 +303,7 @@ extern ops_arg *OPS_curr_args;
 void ops_init( int argc, char **argv, int diags_level );
 void ops_exit();
 
-ops_dat ops_decl_dat_char(ops_block, int, int*, int*, int*, int*, int, char *, int, char const*, char const* );
+ops_dat ops_decl_dat_char(ops_block, int, int*, int*, int*, int*, int*, char *, int, char const*, char const* );
 ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size, int* base, int* d_m, int* d_p, int stride,
                            char* data, int type_size, char const * type, char const * name );
 
@@ -327,12 +327,12 @@ void ops_exit_core( void );
 ops_block ops_decl_block(int dims, char *name);
 
 ops_dat ops_decl_dat_core( ops_block block, int data_size,
-                      int *block_size, int* base, int* d_m, int* d_p, int stride, char *data, int type_size,
+                      int *block_size, int* base, int* d_m, int* d_p, int* stride, char *data, int type_size,
                       char const * type,
                       char const * name );
 
 ops_dat ops_decl_dat_temp_core( ops_block block, int data_size,
-                      int *block_size, int* base,  int* d_m, int* d_p, int stride, char * data, int type_size,
+                      int *block_size, int* base,  int* d_m, int* d_p, int* stride, char * data, int type_size,
                       char const * type, char const * name );
 
 void ops_decl_const_core( int dim, char const * type, int typeSize, char * data, char const * name );
