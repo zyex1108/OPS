@@ -6,7 +6,7 @@
 
 // host stub function
 void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int dim, int* range,
- ops_arg arg0, ops_arg arg1, ops_arg arg2) {
+ops_arg arg0, ops_arg arg1, ops_arg arg2) {
 
   char *p_a[3];
   int  offs[3][2];
@@ -129,14 +129,18 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
   xdim1 = args[1].dat->size[0]*args[1].dat->dim;
 
   int n_x;
+  int x = 0;
+  int y = 0;
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
     for( n_x=start[0]; n_x<end[0]; n_x++ ){
       //call kernel function, passing in pointers to data - remainder
       mgrid_prolong_kernel(  (double *)p_a[0], (double *)p_a[1], (int *)p_a[2] );
       //shift pointers to data x direction
-      p_a[0]= p_a[0] + (dat0 * off0_0) * ((n_x % stride_0[0] == start[0]% stride_0[0])?0:1);
+      p_a[0]= p_a[0] + (dat0 * off0_0) * (((n_x+1) % stride_0[0] == start[0]% stride_0[0])?1:0);
+      //x++;
+      //p_a[0]= p_a[0] + (dat0 * off0_0) * ((x % stride_0[0] == 0)?1:0);
       p_a[1]= p_a[1] + (dat1 * off1_0);
-      arg_idx[0]++;
+      arg_idx[0]++;      
     }
     
     #ifdef OPS_MPI
@@ -146,13 +150,18 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
     #endif //OPS_MPI
     
     //shift pointers to data y direction
-    //printf("n_y = %d, n_ymod2  = %d, off0_0 = %d, off0_1 = %d, end_0[1]-start_0[1] = %d\n",
-    //      n_y,n_y%2,off0_0,off0_1,end_0[1]-start_0[1] );
+    //printf("n_y = %d, n_ymod2  = %d, off0_0 = %d, off0_1 = %d, end_0[0]-start_0[0] = %d, stride_0[0] = %d, stride_0[1] = %d\n",
+    //      n_y,n_y%stride_0[1],off0_0,off0_1,end_0[0]-start_0[0], stride_0[0], stride_0[1] );
     
-    (n_y % stride_0[1] == start[1] % stride_0[1])? p_a[0]= p_a[0] - (dat0 * off0_0) * (end_0[1]-start_0[1]):
-                           p_a[0]= p_a[0] + (dat0 * off0_1);
+    //y++;
+    //if (y % stride_0[1] == 0)
+    if ((n_y+1) % stride_0[1] == start[1] % stride_0[1])
+      p_a[0]= p_a[0] + (dat0 * off0_1);
+    else 
+      p_a[0]= p_a[0] - (dat0 * off0_0) * (end_0[0]-start_0[0]);
+    
     p_a[1]= p_a[1] + (dat1 * off1_1);
-    arg_idx[1]++;
+    arg_idx[1]++;    
   }
   ops_timers_core(&c2,&t2);
   OPS_kernels[1].time += t2-t1;
