@@ -31,17 +31,11 @@ int main(int argc, char **argv)
   int s2D_00[]         = {0,0};
   ops_stencil S2D_00 = ops_decl_stencil( 2, 1, s2D_00, "00");
 
-  int str2[] = {2,2};
-  int stp2[] = {1/2,1/2};
-  ops_stencil S2D_STR2_00 = ops_decl_strided_stencil( 2, 1, s2D_00, str2, "00");
-  ops_stencil S2D_STP2_00 = ops_decl_strided_stencil( 2, 1, s2D_00, stp2, "00");
-
-
 
   int d_p[2] = {2,2};
   int d_m[2] = {-2,-2};
-  int size0[2] = {10, 10};
-  int size1[2] = {5, 5};
+  int size0[2] = {12, 12};
+  int size1[2] = {6, 6};
   int stride0[2] = {1, 1};
   int stride1[2] = {2, 2};
   
@@ -57,8 +51,8 @@ int main(int argc, char **argv)
   double ct0, ct1, et0, et1;
   ops_timers_core(&ct0, &et0);
 
-  int iter_range[] = {0,10,0,10};
-  int iter_range_small[] = {0,5,0,5};
+  int iter_range[] = {0,12,0,12};
+  int iter_range_small[] = {0,6,0,6};
 
 
 

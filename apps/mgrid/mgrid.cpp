@@ -63,18 +63,11 @@ int main(int argc, char **argv)
   int s2D_00[]         = {0,0};
   ops_stencil S2D_00 = ops_decl_stencil( 2, 1, s2D_00, "00");
   
-  int str2[] = {2,2};
-  int stp2[] = {1/2,1/2};
-  ops_stencil S2D_STR2_00 = ops_decl_strided_stencil( 2, 1, s2D_00, str2, "00");
-  ops_stencil S2D_STP2_00 = ops_decl_strided_stencil( 2, 1, s2D_00, stp2, "00");
-  
-  //need strided restrict stencil
-
   //declare datasets
   int d_p[2] = {2,2}; //max halo depths for the dat in the possitive direction
   int d_m[2] = {-2,-2}; //max halo depths for the dat in the negative direction
-  int size0[2] = {10, 10}; //size of the dat -- should be identical to the block on which its define on
-  int size1[2] = {5, 5}; //size of the dat -- should be identical to the block on which its define on
+  int size0[2] = {12, 12}; //size of the dat -- should be identical to the block on which its define on
+  int size1[2] = {6, 6}; //size of the dat -- should be identical to the block on which its define on
   int base[2] = {0,0};
   double* temp = NULL;
 
@@ -90,8 +83,8 @@ int main(int argc, char **argv)
   ops_timers_core(&ct0, &et0);
 
   //populate
-  int iter_range[] = {0,10,0,10};
-  int iter_range_small[] = {0,5,0,5};
+  int iter_range[] = {0,12,0,12};
+  int iter_range_small[] = {0,6,0,6};
   
   //ops_par_loop(mgrid_populate_kernel, "mgrid_populate_kernel", grid0, 2, iter_range,
   //             ops_arg_dat(data0, S2D_00, "double", OPS_WRITE),
