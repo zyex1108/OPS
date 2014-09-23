@@ -15,6 +15,9 @@
 void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2);
 
+void ops_par_loop_mgrid_restrict_kernel(char const *name, ops_block block, int dim, int* range,
+ ops_arg arg0, ops_arg arg1, ops_arg arg2);
+
 void ops_par_loop_mgrid_populate_kernel_1(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1);
 
@@ -77,11 +80,15 @@ int main(int argc, char **argv)
                //ops_arg_dat(data2, S2D_00, "double", OPS_READ),
                ops_arg_dat(data0, S2D_00, "double", OPS_WRITE),
                ops_arg_idx());
-  
+    
   ops_print_dat_to_txtfile(data1, "data.txt");
   //ops_print_dat_to_txtfile(data2, "data.txt");
   ops_print_dat_to_txtfile(data0, "data.txt");
-
+  
+  ops_par_loop_mgrid_restrict_kernel("mgrid_restrict_kernel", grid0, 2, iter_range_small,
+               ops_arg_dat(data0, S2D_00, "double", OPS_READ),
+               ops_arg_dat(data1, S2D_00, "double", OPS_WRITE),
+               ops_arg_idx());
 
 
 

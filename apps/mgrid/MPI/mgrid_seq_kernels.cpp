@@ -12,3 +12,4 @@
 #include "mgrid_populate_kernel_1_seq_kernel.cpp"
 #include "mgrid_populate_kernel_2_seq_kernel.cpp"
 #include "mgrid_prolong_kernel_seq_kernel.cpp"
+#include "mgrid_restrict_kernel_seq_kernel.cpp"
