@@ -54,8 +54,8 @@ void ops_par_loop_mgrid_restrict_kernel(char const *name, ops_block block, int d
   int start_0[2]; int end_0[2]; int stride_0[2];
   for ( int n=0; n<2; n++ ){
     stride_0[n] = args[0].stencil->mgrid_stride[n];
-    start_0[n]  = start[n]/stride_0[n];
-    end_0[n]    = end[n]/stride_0[n];
+    start_0[n]  = start[n];
+    end_0[n]    = end[n];
   }
   offs[0][0] = args[0].stencil->stride[0]*1;  //unit step in x dimension
   offs[0][1] = off2D(1, &start_0[0],

@@ -287,7 +287,14 @@ def ops_gen_mpi(master, date, consts, kernels):
 
     if MULTI_GRID:
       for n in range (0, nargs):
-        if restrict[n]  == 1 or prolong[n] == 1:
+        if restrict[n]  == 1 :
+          code('int start_'+str(n)+'[2]; int end_'+str(n)+'[2]; int stride_'+str(n)+'[2];')
+          FOR('n','0',str(NDIM))
+          code('stride_'+str(n)+'[n] = args['+str(n)+'].stencil->mgrid_stride[n];')
+          code('start_'+str(n)+'[n]  = start[n];')
+          code('end_'+str(n)+'[n]    = end[n];')
+          ENDFOR()
+        elif prolong[n] == 1:
           code('int start_'+str(n)+'[2]; int end_'+str(n)+'[2]; int stride_'+str(n)+'[2];')
           FOR('n','0',str(NDIM))
           code('stride_'+str(n)+'[n] = args['+str(n)+'].stencil->mgrid_stride[n];')
@@ -324,7 +331,6 @@ def ops_gen_mpi(master, date, consts, kernels):
         code('arg_idx['+str(n)+'] = start['+str(n)+'];')
       code('#endif //OPS_MPI')
 
-
     code('')
 
     comm('Timing')
@@ -343,7 +349,6 @@ def ops_gen_mpi(master, date, consts, kernels):
     code('int d_m[OPS_MAX_DIM];')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-
         code('#ifdef OPS_MPI')
         code('for (int d = 0; d < dim; d++) d_m[d] = args['+str(n)+'].dat->d_m[d] + OPS_sub_dat_list[args['+str(n)+'].dat->index]->d_im[d];')
         code('#else //OPS_MPI')
@@ -360,21 +365,18 @@ def ops_gen_mpi(master, date, consts, kernels):
 
         code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data + base'+str(n)+';')
 
-        #original address calculation via funcion call
-        #code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data')
-        #code('+ address2('+str(NDIM)+', args['+str(n)+'].dat->elem_size, &start['+str(n)+'*'+str(NDIM)+'],')
-        #code('args['+str(n)+'].dat->size, args['+str(n)+'].stencil->stride, args['+str(n)+'].dat->offset);')
 
       elif arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ:
           code('p_a['+str(n)+'] = args['+str(n)+'].data;')
         else:
+          code()
           code('#ifdef OPS_MPI')
           code('p_a['+str(n)+'] = ((ops_reduction)args['+str(n)+'].data)->data + ((ops_reduction)args['+str(n)+'].data)->size * block->index;')
           code('#else //OPS_MPI')
           code('p_a['+str(n)+'] = ((ops_reduction)args['+str(n)+'].data)->data;')
           code('#endif //OPS_MPI')
-        code('')
+          code('')
       elif arg_typ[n] == 'ops_arg_idx':
         code('p_a['+str(n)+'] = (char *)arg_idx;')
         code('')
