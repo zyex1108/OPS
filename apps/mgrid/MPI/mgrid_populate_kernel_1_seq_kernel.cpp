@@ -4,7 +4,6 @@
 //user function
 #include "mgrid_populate_kernel.h"
 
-
 // host stub function
 void ops_par_loop_mgrid_populate_kernel_1(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1) {
@@ -15,7 +14,7 @@ void ops_par_loop_mgrid_populate_kernel_1(char const *name, ops_block block, int
 
 
 
-  ops_timing_realloc(0,"mgrid_populate_kernel");
+  ops_timing_realloc(0,"mgrid_populate_kernel_1");
   OPS_kernels[0].count++;
 
   //compute locally allocated range for the sub-block
@@ -49,7 +48,7 @@ void ops_par_loop_mgrid_populate_kernel_1(char const *name, ops_block block, int
   }
   #endif //OPS_MPI
   #ifdef OPS_DEBUG
-  ops_register_args(args, "mgrid_populate_kernel");
+  ops_register_args(args, "mgrid_populate_kernel_1");
   #endif
 
   offs[0][0] = args[0].stencil->stride[0]*1;  //unit step in x dimension

@@ -175,6 +175,7 @@ typedef struct
         char const  *name;     /* name of pointer */
         int         *stencil;  /* elements in the stencil */
         int         *stride;   /* stride of the stencil */
+        int         *mgrid_stride;   /* stride of the stencil under multi_grid*/
 } ops_stencil_core;
 
 typedef ops_stencil_core * ops_stencil;
@@ -339,6 +340,8 @@ void ops_decl_const_core( int dim, char const * type, int typeSize, char * data,
 
 ops_stencil ops_decl_stencil( int dims, int points, int *stencil, char const * name);
 ops_stencil ops_decl_strided_stencil( int dims, int points, int *sten, int *stride, char const * name);
+ops_stencil ops_decl_restrict_stencil( int dims, int points, int *sten, int *stride, char const * name);
+ops_stencil ops_decl_prolong_stencil( int dims, int points, int *sten, int *stride, char const * name);
 
 ops_halo ops_decl_halo(ops_dat from, ops_dat to, int *iter_size, int* from_base, int *to_base, int *from_dir, int *to_dir);
 ops_halo ops_decl_halo_core(ops_dat from, ops_dat to, int *iter_size, int* from_base, int *to_base, int *from_dir, int *to_dir);

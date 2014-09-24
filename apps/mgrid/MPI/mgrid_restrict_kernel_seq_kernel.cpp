@@ -96,10 +96,10 @@ ops_arg arg0, ops_arg arg1, ops_arg arg2) {
   #endif //OPS_MPI
   printf("args[0].dat->stride[0] = %d\n",args[0].dat->stride[0]);
   int base0 = dat0 * 1 * 
-    ( (start[0]/stride_0[0] /*restrict_stride*/) * args[0].stencil->stride[0] - args[0].dat->base[0] - d_m[0]);
+    ( (start[0] /*/stride_0[0] restrict_stride*/) * args[0].stencil->stride[0] - args[0].dat->base[0] - d_m[0]);
   base0 = base0+ dat0 *
     args[0].dat->size[0] *
-    ((start[1]/stride_0[1] /*restrict_stride*/) * args[0].stencil->stride[1] - args[0].dat->base[1] - d_m[1]);
+    ((start[1] /* /stride_0[1] restrict_stride*/) * args[0].stencil->stride[1] - args[0].dat->base[1] - d_m[1]);
   p_a[0] = (char *)args[0].data + base0;
 
   #ifdef OPS_MPI
@@ -135,10 +135,8 @@ ops_arg arg0, ops_arg arg1, ops_arg arg2) {
     for( n_x=start[0]; n_x<end[0]; n_x++ ){
       //call kernel function, passing in pointers to data - remainder
       mgrid_restrict_kernel(  (double *)p_a[0], (double *)p_a[1], (int *)p_a[2] );
-      //shift pointers to data x direction
-      p_a[0]= p_a[0] + (dat0 * off0_0) * (((n_x+1) % stride_0[0] == start[0]% stride_0[0])?1:0);
-      //x++;
-      //p_a[0]= p_a[0] + (dat0 * off0_0) * ((x % stride_0[0] == 0)?1:0);
+      //shift pointers to data x directionx++;
+      p_a[0]= p_a[0] + (dat0 * off0_0) * (2);
       p_a[1]= p_a[1] + (dat1 * off1_0);
       arg_idx[0]++;      
     }
@@ -150,16 +148,10 @@ ops_arg arg0, ops_arg arg1, ops_arg arg2) {
     #endif //OPS_MPI
     
     //shift pointers to data y direction
-    //printf("n_y = %d, n_ymod2  = %d, off0_0 = %d, off0_1 = %d, end_0[0]-start_0[0] = %d, stride_0[0] = %d, stride_0[1] = %d\n",
-    //      n_y,n_y%stride_0[1],off0_0,off0_1,end_0[0]-start_0[0], stride_0[0], stride_0[1] );
+    printf("stride_0[0] = %d, stride_0[1] = %d\n",stride_0[0],stride_0[1]);
     
-    //y++;
-    //if (y % stride_0[1] == 0)
-    if ((n_y+1) % stride_0[1] == start[1] % stride_0[1])
-      p_a[0]= p_a[0] + (dat0 * off0_1);
-    else 
-      p_a[0]= p_a[0] - (dat0 * off0_0) * (end_0[0]-start_0[0]);
     
+    p_a[0]= p_a[0] + (dat0 * off0_1) * (2);
     p_a[1]= p_a[1] + (dat1 * off1_1);
     arg_idx[1]++;    
   }

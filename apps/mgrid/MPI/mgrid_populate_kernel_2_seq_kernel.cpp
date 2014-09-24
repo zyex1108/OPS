@@ -4,7 +4,6 @@
 //user function
 #include "mgrid_populate_kernel.h"
 
-
 // host stub function
 void ops_par_loop_mgrid_populate_kernel_2(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1) {
@@ -15,8 +14,8 @@ void ops_par_loop_mgrid_populate_kernel_2(char const *name, ops_block block, int
 
 
 
-  ops_timing_realloc(0,"mgrid_populate_kernel");
-  OPS_kernels[0].count++;
+  ops_timing_realloc(1,"mgrid_populate_kernel_2");
+  OPS_kernels[1].count++;
 
   //compute locally allocated range for the sub-block
   int start[2];
@@ -49,7 +48,7 @@ void ops_par_loop_mgrid_populate_kernel_2(char const *name, ops_block block, int
   }
   #endif //OPS_MPI
   #ifdef OPS_DEBUG
-  ops_register_args(args, "mgrid_populate_kernel");
+  ops_register_args(args, "mgrid_populate_kernel_2");
   #endif
 
   offs[0][0] = args[0].stencil->stride[0]*1;  //unit step in x dimension
@@ -97,7 +96,7 @@ void ops_par_loop_mgrid_populate_kernel_2(char const *name, ops_block block, int
   ops_H_D_exchanges_host(args, 2);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[0].mpi_time += t1-t2;
+  OPS_kernels[1].mpi_time += t1-t2;
 
   xdim0 = args[0].dat->size[0]*args[0].dat->dim;
 
@@ -136,10 +135,10 @@ void ops_par_loop_mgrid_populate_kernel_2(char const *name, ops_block block, int
     arg_idx[1]++;
   }
   ops_timers_core(&c2,&t2);
-  OPS_kernels[0].time += t2-t1;
+  OPS_kernels[1].time += t2-t1;
   ops_set_dirtybit_host(args, 2);
   ops_set_halo_dirtybit3(&args[0],range);
 
   //Update kernel record
-  OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[1].transfer += ops_compute_transfer(dim, range, &arg0);
 }
