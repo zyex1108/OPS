@@ -102,10 +102,10 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
   for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d];
   #endif //OPS_MPI
   int base0 = dat0 * 1 * 
-    (start[0] * args[0].stencil->stride[0] - args[0].dat->base[0] - d_m[0]);
+    (start[0]/3 * args[0].stencil->stride[0] - args[0].dat->base[0] - d_m[0]);
   base0 = base0+ dat0 *
     args[0].dat->size[0] *
-    (start[1] * args[0].stencil->stride[1] - args[0].dat->base[1] - d_m[1]);
+    (start[1]/3 * args[0].stencil->stride[1] - args[0].dat->base[1] - d_m[1]);
   p_a[0] = (char *)args[0].data + base0;
 
   #ifdef OPS_MPI
@@ -143,14 +143,14 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
 
 
       //shift pointers to data x direction
-      p_a[0]= p_a[0] + (dat0 * off0_0) * (((global_idx[0]+1) % stride_0[0] == start[0]% stride_0[0])?1:0);
+      p_a[0]= p_a[0] + (dat0 * off0_0) * (((global_idx[0]+1) % stride_0[0] == 0 % stride_0[0])?1:0);
       p_a[1]= p_a[1] + (dat1 * off1_0);
       arg_idx[0]++;
       global_idx[0]++;
     }
 
     //shift pointers to data y direction
-    if ((global_idx[1]+1) % stride_0[1] == start[1] % stride_0[1]) {
+    if ((global_idx[1]+1) % stride_0[1] == 0 % stride_0[1]) {
       p_a[0]= p_a[0] + (dat0 * off0_1);
     }
     else {

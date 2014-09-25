@@ -10,7 +10,4 @@ void mgrid_populate_kernel_2(double *val, int *idx) {
 }
 
 
-
-
-
 #endif //MGRID_POPULATE_KERNELS_H
