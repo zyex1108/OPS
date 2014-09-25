@@ -66,14 +66,14 @@ void ops_exit()
 }
 
 ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size,
-                           int *base, int* d_m, int* d_p, char* data,
+                           int *base, int* d_m, int* d_p, int* stride, char* data,
                            int type_size, char const * type, char const * name )
 {
 
 /** ---- allocate an empty dat based on the local array sizes computed
          above on each MPI process                                      ---- **/
 
-  ops_dat dat = ops_decl_dat_temp_core(block, size, dat_size, base, d_m, d_p, data, type_size, type, name );
+  ops_dat dat = ops_decl_dat_temp_core(block, size, dat_size, base, d_m, d_p, stride, data, type_size, type, name );
 
   dat->user_managed = 0;
 
