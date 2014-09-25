@@ -74,6 +74,14 @@ void ops_par_loop_mgrid_restrict_kernel(char const *name, ops_block block, int d
   arg_idx[0] = start[0];
   arg_idx[1] = start[1];
   #endif //OPS_MPI
+  int global_idx[2];
+  #ifdef OPS_MPI
+  global_idx[0] = sb->decomp_disp[0]+start[0];
+  global_idx[1] = sb->decomp_disp[1]+start[1];
+  #else //OPS_MPI
+  global_idx[0] = start[0];
+  global_idx[1] = start[1];
+  #endif //OPS_MPI
 
   //Timing
   double t1,t2,c1,c2;
@@ -138,17 +146,26 @@ void ops_par_loop_mgrid_restrict_kernel(char const *name, ops_block block, int d
       p_a[0]= p_a[0] + (dat0 * off0_0) * stride_0[0];
       p_a[1]= p_a[1] + (dat1 * off1_0);
       arg_idx[0]++;
+      global_idx[0]++;
     }
 
     //shift pointers to data y direction
     p_a[0]= p_a[0] + (dat0 * off0_1) * stride_0[1];
     p_a[1]= p_a[1] + (dat1 * off1_1);
+
     #ifdef OPS_MPI
     arg_idx[0] = sb->decomp_disp[0]+start[0];
     #else //OPS_MPI
     arg_idx[0] = start[0];
     #endif //OPS_MPI
     arg_idx[1]++;
+
+    #ifdef OPS_MPI
+    global_idx[0] = sb->decomp_disp[0]+start[0];
+    #else //OPS_MPI
+    global_idx[0] = start[0];
+    #endif //OPS_MPI
+    global_idx[1]++;
   }
   ops_timers_core(&c2,&t2);
   OPS_kernels[3].time += t2-t1;

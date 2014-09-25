@@ -330,6 +330,17 @@ def ops_gen_mpi(master, date, consts, kernels):
       for n in range (0,NDIM):
         code('arg_idx['+str(n)+'] = start['+str(n)+'];')
       code('#endif //OPS_MPI')
+    
+    if MULTI_GRID:
+      code('int global_idx['+str(NDIM)+'];')
+      code('#ifdef OPS_MPI')
+      for n in range (0,NDIM):
+        code('global_idx['+str(n)+'] = sb->decomp_disp['+str(n)+']+start['+str(n)+'];')
+      code('#else //OPS_MPI')
+      for n in range (0,NDIM):
+        code('global_idx['+str(n)+'] = start['+str(n)+'];')
+      code('#endif //OPS_MPI')
+    
 
     code('')
 
@@ -362,7 +373,6 @@ def ops_gen_mpi(master, date, consts, kernels):
             line = line + depth*' '+'  args['+str(n)+'].dat->size['+str(d2)+'] *\n'
           code(line[:-1])
           code('  (start['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->base['+str(d)+'] - d_m['+str(d)+']);')
-
         code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data + base'+str(n)+';')
 
 
@@ -370,7 +380,7 @@ def ops_gen_mpi(master, date, consts, kernels):
         if accs[n] == OPS_READ:
           code('p_a['+str(n)+'] = args['+str(n)+'].data;')
         else:
-          code()
+          code('')
           code('#ifdef OPS_MPI')
           code('p_a['+str(n)+'] = ((ops_reduction)args['+str(n)+'].data)->data + ((ops_reduction)args['+str(n)+'].data)->size * block->index;')
           code('#else //OPS_MPI')
@@ -380,10 +390,6 @@ def ops_gen_mpi(master, date, consts, kernels):
       elif arg_typ[n] == 'ops_arg_idx':
         code('p_a['+str(n)+'] = (char *)arg_idx;')
         code('')
-      #if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_READ or accs[n] == OPS_RW ):# or accs[n] == OPS_INC):
-        #code('ops_exchange_halo2(&args['+str(n)+'],max'+str(n)+',min'+str(n)+');')
-        #code('ops_exchange_halo3(&args['+str(n)+'],max'+str(n)+',min'+str(n)+',range);')
-        #code('ops_exchange_halo(&args['+str(n)+'],2);')
       code('')
     code('')
 
@@ -395,9 +401,7 @@ def ops_gen_mpi(master, date, consts, kernels):
     code('OPS_kernels['+str(nk)+'].mpi_time += t1-t2;')
     code('')
 
-    #code('ops_halo_exchanges(args, '+str(nargs)+');\n')
-
-
+    
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('xdim'+str(n)+' = args['+str(n)+'].dat->size[0]*args['+str(n)+'].dat->dim;')
@@ -540,12 +544,15 @@ def ops_gen_mpi(master, date, consts, kernels):
           if restrict[n] == 1:
             code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_0) * stride_'+str(n)+'[0];')
           elif prolong[n] == 1:
-            code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_0) * (((n_x+1) % stride_'+str(n)+'[0] == start[0]% stride_'+str(n)+'[0])?1:0);')
+            code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_0) * (((global_idx[0]+1) % stride_'+str(n)+'[0] == start[0]% stride_'+str(n)+'[0])?1:0);')
           else:
             code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_0);')            
   
       if arg_idx:
         code('arg_idx[0]++;')
+      if MULTI_GRID:
+        code('global_idx[0]++;')
+        
       ENDFOR()
       code('')  
   
@@ -555,7 +562,7 @@ def ops_gen_mpi(master, date, consts, kernels):
           if restrict[n] == 1:
             code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_1) * stride_'+str(n)+'[1];')
           elif prolong[n] == 1:
-            IF('(n_y+1) % stride_'+str(n)+'[1] == start[1] % stride_'+str(n)+'[1]')
+            IF('(global_idx[1]+1) % stride_'+str(n)+'[1] == start[1] % stride_'+str(n)+'[1]')
             code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_1);')
             ENDIF()
             ELSE()
@@ -565,6 +572,7 @@ def ops_gen_mpi(master, date, consts, kernels):
             code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_1);')
           
       if arg_idx:
+        code('')
         code('#ifdef OPS_MPI')
         for n in range (0,1):
           code('arg_idx['+str(n)+'] = sb->decomp_disp['+str(n)+']+start['+str(n)+'];')
@@ -573,6 +581,18 @@ def ops_gen_mpi(master, date, consts, kernels):
           code('arg_idx['+str(n)+'] = start['+str(n)+'];')
         code('#endif //OPS_MPI')
         code('arg_idx[1]++;')
+        
+      if MULTI_GRID:
+        code('')
+        code('#ifdef OPS_MPI')
+        for n in range (0,1):
+          code('global_idx['+str(n)+'] = sb->decomp_disp['+str(n)+']+start['+str(n)+'];')
+        code('#else //OPS_MPI')
+        for n in range (0,1):
+          code('global_idx['+str(n)+'] = start['+str(n)+'];')
+        code('#endif //OPS_MPI')
+        code('global_idx[1]++;')
+        
       ENDFOR()
   
       if NDIM==3:
