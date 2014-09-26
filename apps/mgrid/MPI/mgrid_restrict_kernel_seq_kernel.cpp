@@ -102,10 +102,10 @@ void ops_par_loop_mgrid_restrict_kernel(char const *name, ops_block block, int d
   for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d];
   #endif //OPS_MPI
   int base0 = dat0 * 1 * 
-    (start[0] * args[0].stencil->stride[0] - args[0].dat->base[0] - d_m[0]);
+    ((start[0]*stride_0[0]) * args[0].stencil->stride[0] - args[0].dat->base[0] - d_m[0]);
   base0 = base0+ dat0 *
     args[0].dat->size[0] *
-    (start[1] * args[0].stencil->stride[1] - args[0].dat->base[1] - d_m[1]);
+    ((start[1]*stride_0[1]) * args[0].stencil->stride[1] - args[0].dat->base[1] - d_m[1]);
   p_a[0] = (char *)args[0].data + base0;
 
   #ifdef OPS_MPI

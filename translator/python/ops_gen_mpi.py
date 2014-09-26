@@ -366,13 +366,23 @@ def ops_gen_mpi(master, date, consts, kernels):
         code('for (int d = 0; d < dim; d++) d_m[d] = args['+str(n)+'].dat->d_m[d];')
         code('#endif //OPS_MPI')
         code('int base'+str(n)+' = dat'+str(n)+' * 1 * ')
-        code('  (start[0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->base[0] - d_m[0]);')
+        if prolong[n] == 1:
+          code('  ((start[0]/stride_'+str(n)+'[0]) * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->base[0] - d_m[0]);')
+        elif restrict[n] == 1:
+          code('  ((start[0]*stride_'+str(n)+'[0]) * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->base[0] - d_m[0]);')
+        else:
+          code('  (start[0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->base[0] - d_m[0]);')
         for d in range (1, NDIM):
           line = 'base'+str(n)+' = base'+str(n)+'+ dat'+str(n)+' *\n'
           for d2 in range (0,d):
             line = line + depth*' '+'  args['+str(n)+'].dat->size['+str(d2)+'] *\n'
           code(line[:-1])
-          code('  (start['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->base['+str(d)+'] - d_m['+str(d)+']);')
+          if prolong[n] == 1:
+            code('  ((start['+str(d)+']/stride_'+str(n)+'['+str(d)+']) * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->base['+str(d)+'] - d_m['+str(d)+']);')
+          elif restrict[n] == 1:
+            code('  ((start['+str(d)+']*stride_'+str(n)+'['+str(d)+']) * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->base['+str(d)+'] - d_m['+str(d)+']);')
+          else:
+            code('  (start['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->base['+str(d)+'] - d_m['+str(d)+']);')
         code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data + base'+str(n)+';')
 
 
@@ -544,7 +554,8 @@ def ops_gen_mpi(master, date, consts, kernels):
           if restrict[n] == 1:
             code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_0) * stride_'+str(n)+'[0];')
           elif prolong[n] == 1:
-            code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_0) * (((global_idx[0]+1) % stride_'+str(n)+'[0] == start[0]% stride_'+str(n)+'[0])?1:0);')
+            #code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_0) * (((global_idx[0]+1) % stride_'+str(n)+'[0] == start[0]% stride_'+str(n)+'[0])?1:0);')
+            code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_0) * (((global_idx[0]+1) % stride_'+str(n)+'[0] == 0)?1:0);')
           else:
             code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_0);')            
   
@@ -562,7 +573,8 @@ def ops_gen_mpi(master, date, consts, kernels):
           if restrict[n] == 1:
             code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_1) * stride_'+str(n)+'[1];')
           elif prolong[n] == 1:
-            IF('(global_idx[1]+1) % stride_'+str(n)+'[1] == start[1] % stride_'+str(n)+'[1]')
+            #IF('(global_idx[1]+1) % stride_'+str(n)+'[1] == start[1] % stride_'+str(n)+'[1]')
+            IF('(global_idx[1]+1) % stride_'+str(n)+'[1] == 0')
             code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_1);')
             ENDIF()
             ELSE()
