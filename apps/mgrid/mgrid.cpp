@@ -77,8 +77,8 @@ int main(int argc, char **argv)
   int stride2[2] = {3, 3};
   //declare restrict and prolong stencils
   ops_stencil S2D_RESTRICT_00 = ops_decl_restrict_stencil( 2, 1, s2D_00, stride1, "RESTRICT_00");
-  ops_stencil S2D_PROLONG_00 = ops_decl_prolong_stencil( 2, 1, s2D_00, stride1, "PROLONG_00");
-  //ops_stencil S2D_PROLONG_00 = ops_decl_prolong_stencil( 2, 1, s2D_00, stride2, "PROLONG_00");
+  //ops_stencil S2D_PROLONG_00 = ops_decl_prolong_stencil( 2, 1, s2D_00, stride1, "PROLONG_00");
+  ops_stencil S2D_PROLONG_00 = ops_decl_prolong_stencil( 2, 1, s2D_00, stride2, "PROLONG_00");
   
   int base[2] = {0,0};
   double* temp = NULL;
@@ -109,21 +109,21 @@ int main(int argc, char **argv)
                ops_arg_idx());
 
   ops_par_loop(mgrid_prolong_kernel, "mgrid_prolong_kernel", grid0, 2, iter_range,
-               ops_arg_dat(data1, S2D_PROLONG_00, "double", OPS_READ),
-               //ops_arg_dat(data2, S2D_PROLONG_00, "double", OPS_READ),
+               //ops_arg_dat(data1, S2D_PROLONG_00, "double", OPS_READ),
+               ops_arg_dat(data2, S2D_PROLONG_00, "double", OPS_READ),
                ops_arg_dat(data0, S2D_00, "double", OPS_WRITE),
                ops_arg_idx());
   
   //ops_print_dat_to_txtfile(data1, "data.txt");
-  //ops_print_dat_to_txtfile(data2, "data.txt");  
+  ops_print_dat_to_txtfile(data2, "data.txt");  
   ops_print_dat_to_txtfile(data0, "data.txt");
  
-  ops_par_loop(mgrid_restrict_kernel, "mgrid_restrict_kernel", grid0, 2, iter_range_small,
+  /*ops_par_loop(mgrid_restrict_kernel, "mgrid_restrict_kernel", grid0, 2, iter_range_small,
                ops_arg_dat(data0, S2D_RESTRICT_00, "double", OPS_READ), 
                ops_arg_dat(data3, S2D_00, "double", OPS_WRITE),
                ops_arg_idx());
 
-  ops_print_dat_to_txtfile(data3, "data.txt");
+  ops_print_dat_to_txtfile(data3, "data.txt");*/
   
 
 
