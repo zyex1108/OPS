@@ -108,8 +108,8 @@ typedef unsigned int uint;
 typedef long long ll;
 typedef unsigned long long ull;
 
-typedef int ops_access; //holds OP_READ, OP_WRITE, OP_RW, OP_INC, OP_MIN, OP_MAX
-typedef int ops_arg_type; // holds OP_ARG_GBL, OP_ARG_DAT
+typedef int ops_access; //holds OPS_READ, OPS_WRITE, OPS_RW, OPS_INC, OPS_MIN, OPS_MAX
+typedef int ops_arg_type; // holds OPS_ARG_GBL, OPS_ARG_DAT
 
 
 /*

@@ -21,6 +21,49 @@ void ops_par_loop_mgrid_populate_kernel_1(char const *name, ops_block block, int
   int start[2];
   int end[2];
 
+  //determine the corect range to iterate over, based on the dats that are written to
+  int fine_grid_dat_idx = -1;
+  ops_dat dat;
+  for(int i = 0; i<2; i++){
+    if(args[i].acc == OPS_READ || args[i].acc == OPS_RW)
+      fine_grid_dat_idx = args[i].dat->index;
+    else if(args[i].acc == OPS_WRITE){
+      fine_grid_dat_idx = args[i].dat->index;
+      dat = args[i].dat;
+      break;
+    }
+  }
+
+  #ifdef OPS_MPI
+  sub_dat *sd = OPS_sub_dat_list[fine_grid_dat_idx];
+  sub_block_list sb = OPS_sub_block_list[block->index];
+  if (!sb->owned) return;
+  for ( int n=0; n<2; n++ ){
+    start[n] = sd->decomp_disp[n] - dat->d_m[n];end[n] = sd->decomp_size[n] + dat->d_m[n] - dat->d_p[n]; ///**check
+    //printf("name %s start[n] = %d end[n] = %d\n",dat->name,start[n],end[n]);
+    if (start[n] >= range[2*n]) {
+      start[n] = 0;
+    }
+    else {
+      start[n] = range[2*n] - start[n];
+    }
+    if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];
+    if (end[n] >= range[2*n+1]) {
+      end[n] = range[2*n+1] - sd->decomp_disp[n] + dat->d_m[n]; ///**check
+    }
+    else {
+      end[n] = sd->decomp_size[n]-2; ///**check
+    }
+    if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sd->decomp_disp[n]+sd->decomp_size[n]-2))///**check
+      end[n] += (range[2*n+1]-sd->decomp_disp[n]-sd->decomp_size[n]); ///**check
+    //printf("name %s start[%d] = %d end[%d] = %d\n",dat->name,n,start[n],n,end[n]);
+  }
+  #else
+  for ( int n=0; n<2; n++ ){
+    start[n] = range[2*n];end[n] = range[2*n+1];
+  }
+  #endif
+/*
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
   if (!sb->owned) return;
@@ -47,9 +90,12 @@ void ops_par_loop_mgrid_populate_kernel_1(char const *name, ops_block block, int
     start[n] = range[2*n];end[n] = range[2*n+1];
   }
   #endif //OPS_MPI
+*/
   #ifdef OPS_DEBUG
   ops_register_args(args, "mgrid_populate_kernel_1");
   #endif
+
+
 
   offs[0][0] = args[0].stencil->stride[0]*1;  //unit step in x dimension
   offs[0][1] = off2D(1, &start[0],
@@ -58,12 +104,15 @@ void ops_par_loop_mgrid_populate_kernel_1(char const *name, ops_block block, int
 
   int arg_idx[2];
   #ifdef OPS_MPI
-  arg_idx[0] = sb->decomp_disp[0]+start[0];
-  arg_idx[1] = sb->decomp_disp[1]+start[1];
+  arg_idx[0] = sd->decomp_disp[0]+start[0]-dat->d_m[0];
+  arg_idx[1] = sd->decomp_disp[1]+start[1]-dat->d_m[1];
   #else //OPS_MPI
   arg_idx[0] = start[0];
   arg_idx[1] = start[1];
   #endif //OPS_MPI
+
+  printf("start[0] = %d end[0] = %d, arg_idx[0] = %d\n",start[0],end[0],arg_idx[0]);
+  printf("start[1] = %d end[1] = %d, arg_idx[1] = %d\n",start[1],end[1],arg_idx[1]);
 
   //Timing
   double t1,t2,c1,c2;
@@ -80,7 +129,7 @@ void ops_par_loop_mgrid_populate_kernel_1(char const *name, ops_block block, int
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d];
   #endif //OPS_MPI
-  int base0 = dat0 * 1 * 
+  int base0 = dat0 * 1 *
     (start[0] * args[0].stencil->stride[0] - args[0].dat->base[0] - d_m[0]);
   base0 = base0+ dat0 *
     args[0].dat->size[0] *
@@ -128,7 +177,7 @@ void ops_par_loop_mgrid_populate_kernel_1(char const *name, ops_block block, int
     //shift pointers to data y direction
     p_a[0]= p_a[0] + (dat0 * off0_1);
     #ifdef OPS_MPI
-    arg_idx[0] = sb->decomp_disp[0]+start[0];
+    arg_idx[0] = sd->decomp_disp[0]+start[0]-dat->d_m[0];
     #else //OPS_MPI
     arg_idx[0] = start[0];
     #endif //OPS_MPI

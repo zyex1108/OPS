@@ -109,7 +109,7 @@ void ops_partition_blocks(int **processes, int **proc_offsets, int **proc_disps,
   else { //partitioning strategy 2, few blocks, many MPI processes, split all blocks into same number of pieces
     int nproc_each_block = ops_comm_global_size / OPS_block_index; //leftovers will be idle!
     *processes =    (int *)malloc(nproc_each_block * OPS_block_index *sizeof(int));
-    *proc_offsets = (int *)malloc(         (1+OPS_block_index)*sizeof(int));
+    *proc_offsets = (int *)malloc((1+OPS_block_index)*sizeof(int));
     *proc_disps =   (int *)malloc(OPS_MAX_DIM*nproc_each_block*OPS_block_index *sizeof(int));
     *proc_sizes =   (int *)malloc(OPS_MAX_DIM*nproc_each_block*OPS_block_index *sizeof(int));
     *proc_dimsplit= (int *)malloc(OPS_MAX_DIM*OPS_block_index *sizeof(int));
@@ -259,14 +259,22 @@ void ops_decomp_dats(sub_block *sb) {
         prod[d] = prod[d-1];
         sd->decomp_disp[d] = 0;
         sd->decomp_size[d] = 1;
-	sd->d_im[d] = 0; //no intra-block halo
-	sd->d_ip[d] = 0;
+        sd->d_im[d] = 0; //no intra-block halo
+        sd->d_ip[d] = 0;
         continue;
       }
 
-      int zerobase_gbl_size = dat->size[d] + dat->d_m[d] - dat->d_p[d] + dat->base[d];
+      /*int zerobase_gbl_size = dat->size[d] + dat->d_m[d] - dat->d_p[d] + dat->base[d];
       sd->decomp_disp[d] = sb->decomp_disp[d];
-      sd->decomp_size[d] = MAX(0,MIN(sb->decomp_size[d], zerobase_gbl_size - sb->decomp_disp[d]));
+      sd->decomp_size[d] = MAX(0,MIN(sb->decomp_size[d], zerobase_gbl_size - sb->decomp_disp[d]));*/
+      
+      int zerobase_gbl_size = dat->size[d]+ dat->d_m[d] - dat->d_p[d] + dat->base[d];
+      sd->decomp_disp[d] = sb->decomp_disp[d]/dat->stride[d];
+      sd->decomp_size[d] = MAX(0,sb->decomp_size[d]/dat->stride[d]);
+      //sd->decomp_size[d] = sd->decomp_size[d]/dat->stride[d];
+      //printf("sb->decomp_size[%d] = %d\n",d,sb->decomp_size[d]);
+      
+      
       if(sb->id_m[d] != MPI_PROC_NULL) {
         //if not negative end, then there is no block-level left padding, but intra-block halo padding
         dat->base[d] = 0;
@@ -289,6 +297,8 @@ void ops_decomp_dats(sub_block *sb) {
 
       dat->size[d] = sd->decomp_size[d] - sd->d_im[d] + sd->d_ip[d];
       prod[d] = prod[d-1]*dat->size[d];
+      
+      printf("dat->name %s, sd->decomp_size[%d] = %d dat->stride[d] = %d\n",dat->name,d,sd->decomp_size[d],dat->stride[d]);
     }
 
     if (!sb->owned) {sd->mpidat = NULL; continue;}
