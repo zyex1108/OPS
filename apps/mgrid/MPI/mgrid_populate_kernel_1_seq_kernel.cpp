@@ -12,6 +12,8 @@ void ops_par_loop_mgrid_populate_kernel_1(char const *name, ops_block block, int
   int  offs[2][2];
   ops_arg args[2] = { arg0, arg1};
 
+
+
   ops_timing_realloc(0,"mgrid_populate_kernel_1");
   OPS_kernels[0].count++;
 
@@ -22,11 +24,11 @@ void ops_par_loop_mgrid_populate_kernel_1(char const *name, ops_block block, int
 
   #ifdef OPS_MPI
   if (compute_ranges(args, block, range, start, end, arg_idx) < 0) return;
-  #else
+  #else //OPS_MPI
   for ( int n=0; n<2; n++ ){
     start[n] = range[2*n];end[n] = range[2*n+1];
   }
-  #endif
+  #endif //OPS_MPI
 
   #ifdef OPS_DEBUG
   ops_register_args(args, "mgrid_populate_kernel_1");
@@ -36,16 +38,14 @@ void ops_par_loop_mgrid_populate_kernel_1(char const *name, ops_block block, int
   offs[0][1] = off2D(1, &start[0],
       &end[0],args[0].dat->size, args[0].stencil->stride) - offs[0][0];
 
+
   #ifdef OPS_MPI
   int arg_idx_0 = arg_idx[0];
-  int arg_idx_1 = arg_idx[0];
+  int arg_idx_1 = arg_idx[1];
   #else //OPS_MPI
   int arg_idx_0 = start[0];
   int arg_idx_1 = start[1];
   #endif //OPS_MPI
-
-  printf("start[0] = %d end[0] = %d, arg_idx[0] = %d\n",start[0],end[0],arg_idx[0]);
-  printf("start[1] = %d end[1] = %d, arg_idx[1] = %d\n",start[1],end[1],arg_idx[1]);
 
   //Timing
   double t1,t2,c1,c2;
@@ -62,7 +62,7 @@ void ops_par_loop_mgrid_populate_kernel_1(char const *name, ops_block block, int
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d];
   #endif //OPS_MPI
-  int base0 = dat0 * 1 *
+  int base0 = dat0 * 1 * 
     (start[0] * args[0].stencil->stride[0] - args[0].dat->base[0] - d_m[0]);
   base0 = base0+ dat0 *
     args[0].dat->size[0] *
@@ -70,6 +70,8 @@ void ops_par_loop_mgrid_populate_kernel_1(char const *name, ops_block block, int
   p_a[0] = (char *)args[0].data + base0;
 
   p_a[1] = (char *)arg_idx;
+
+
 
   ops_H_D_exchanges_host(args, 2);
   ops_halo_exchanges(args,2,range);

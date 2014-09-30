@@ -19,10 +19,6 @@ void ops_par_loop_mgrid_populate_kernel_1(char const *, ops_block, int , int*,
   ops_arg,
   ops_arg );
 
-void ops_par_loop_mgrid_populate_kernel_2(char const *, ops_block, int , int*,
-  ops_arg,
-  ops_arg );
-
 
 
 //#include "mgrid_populate_kernel.h"
@@ -61,13 +57,14 @@ int main(int argc, char **argv)
 
   ops_dat data0 = ops_decl_dat(grid0, 1, size0, base, d_m, d_p, stride0 , temp, "double", "data0");
   ops_dat data1 = ops_decl_dat(grid0, 1, size1, base, d_m, d_p, stride1 , temp, "double", "data1");
-  //ops_dat data2 = ops_decl_dat(grid0, 1, size2, base, d_m, d_p, stride2 , temp, "double", "data2");
 
-  //ops_dat data3 = ops_decl_dat(grid0, 1, size3, base, d_m, d_p, stride1 , temp, "double", "data3");
+
+
 
   ops_partition("");
-  
-    
+
+
+
   double ct0, ct1, et0, et1;
   ops_timers_core(&ct0, &et0);
 
@@ -78,15 +75,13 @@ int main(int argc, char **argv)
   ops_par_loop_mgrid_populate_kernel_1("mgrid_populate_kernel_1", grid0, 2, iter_range_small,
                ops_arg_dat(data1, S2D_00, "double", OPS_WRITE),
                ops_arg_idx());
-  /*
-  ops_par_loop_mgrid_populate_kernel_2("mgrid_populate_kernel_2", grid0, 2, iter_range_tiny,
-               ops_arg_dat(data2, S2D_00, "double", OPS_WRITE),
-               ops_arg_idx());
-               */
+
+
+
 
   ops_print_dat_to_txtfile(data1, "data.txt");
 
-  //ops_print_dat_to_txtfile(data0, "data.txt");
+
 
 
 
@@ -95,6 +90,6 @@ int main(int argc, char **argv)
   ops_timing_output();
 
   ops_printf("\nTotal Wall time %lf\n",et1-et0);
-  
-  //ops_exit();
+
+  ops_exit();
 }
