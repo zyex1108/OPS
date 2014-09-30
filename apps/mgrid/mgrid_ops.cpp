@@ -19,6 +19,11 @@ void ops_par_loop_mgrid_populate_kernel_1(char const *, ops_block, int , int*,
   ops_arg,
   ops_arg );
 
+void ops_par_loop_mgrid_prolong_kernel(char const *, ops_block, int , int*,
+  ops_arg,
+  ops_arg,
+  ops_arg );
+
 
 
 //#include "mgrid_populate_kernel.h"
@@ -78,10 +83,14 @@ int main(int argc, char **argv)
 
 
 
+  ops_par_loop_mgrid_prolong_kernel("mgrid_prolong_kernel", grid0, 2, iter_range,
+               ops_arg_dat(data1, S2D_PROLONG_00, "double", OPS_READ),
+               ops_arg_dat(data0, S2D_00, "double", OPS_WRITE),
+               ops_arg_idx());
 
   ops_print_dat_to_txtfile(data1, "data.txt");
 
-
+  ops_print_dat_to_txtfile(data0, "data.txt");
 
 
 

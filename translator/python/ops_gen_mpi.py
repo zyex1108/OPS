@@ -317,7 +317,7 @@ def ops_gen_mpi(master, date, consts, kernels):
       code('int global_idx['+str(NDIM)+'];')
       code('#ifdef OPS_MPI')
       for n in range (0,NDIM):
-        code('global_idx['+str(n)+'] = sb->decomp_disp['+str(n)+']+start['+str(n)+'];')
+        code('global_idx['+str(n)+'] = arg_idx['+str(n)+'];')
       code('#else //OPS_MPI')
       for n in range (0,NDIM):
         code('global_idx['+str(n)+'] = start['+str(n)+'];')
@@ -383,7 +383,7 @@ def ops_gen_mpi(master, date, consts, kernels):
         code('p_a['+str(n)+'] = (char *)arg_idx;')
         code('')
       code('')
-    code('')
+    
 
     code('ops_H_D_exchanges_host(args, '+str(nargs)+');')
     code('ops_halo_exchanges(args,'+str(nargs)+',range);')
@@ -496,7 +496,7 @@ def ops_gen_mpi(master, date, consts, kernels):
         if arg_idx:
           code('#ifdef OPS_MPI')
           for n in range (0,2):
-            code('arg_idx['+str(n)+'] = sb->decomp_disp['+str(n)+']+start['+str(n)+'];')
+            code('arg_idx['+str(n)+'] = arg_idx_'+str(n)+';')
           code('#else //OPS_MPI')
           for n in range (0,2):
             code('arg_idx['+str(n)+'] = start['+str(n)+'];')
@@ -527,7 +527,7 @@ def ops_gen_mpi(master, date, consts, kernels):
         if n%n_per_line == 2 and n <> nargs-1:
           text = text +'\n          '
       code(text);
-      code('')  
+      
   
       comm('shift pointers to data x direction')
       for n in range (0, nargs):
@@ -568,7 +568,7 @@ def ops_gen_mpi(master, date, consts, kernels):
         code('')
         code('#ifdef OPS_MPI')
         for n in range (0,1):
-          code('arg_idx['+str(n)+'] = sb->decomp_disp['+str(n)+']+start['+str(n)+'];')
+          code('arg_idx['+str(n)+'] = arg_idx_'+str(n)+';')
         code('#else //OPS_MPI')
         for n in range (0,1):
           code('arg_idx['+str(n)+'] = start['+str(n)+'];')
@@ -579,7 +579,7 @@ def ops_gen_mpi(master, date, consts, kernels):
         code('')
         code('#ifdef OPS_MPI')
         for n in range (0,1):
-          code('global_idx['+str(n)+'] = sb->decomp_disp['+str(n)+']+start['+str(n)+'];')
+          code('global_idx['+str(n)+'] = arg_idx_'+str(n)+';')
         code('#else //OPS_MPI')
         for n in range (0,1):
           code('global_idx['+str(n)+'] = start['+str(n)+'];')

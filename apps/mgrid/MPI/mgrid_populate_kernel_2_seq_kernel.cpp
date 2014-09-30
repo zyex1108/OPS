@@ -14,39 +14,22 @@ void ops_par_loop_mgrid_populate_kernel_2(char const *name, ops_block block, int
 
 
 
-  ops_timing_realloc(1,"mgrid_populate_kernel_2");
-  OPS_kernels[1].count++;
+  ops_timing_realloc(0,"mgrid_populate_kernel_2");
+  OPS_kernels[0].count++;
 
   //compute locally allocated range for the sub-block
   int start[2];
   int end[2];
+  int arg_idx[2];
 
   #ifdef OPS_MPI
-  sub_block_list sb = OPS_sub_block_list[block->index];
-  if (!sb->owned) return;
-  for ( int n=0; n<2; n++ ){
-    start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
-    if (start[n] >= range[2*n]) {
-      start[n] = 0;
-    }
-    else {
-      start[n] = range[2*n] - start[n];
-    }
-    if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];
-    if (end[n] >= range[2*n+1]) {
-      end[n] = range[2*n+1] - sb->decomp_disp[n];
-    }
-    else {
-      end[n] = sb->decomp_size[n];
-    }
-    if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))
-      end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
-  }
+  if (compute_ranges(args, block, range, start, end, arg_idx) < 0) return;
   #else //OPS_MPI
   for ( int n=0; n<2; n++ ){
     start[n] = range[2*n];end[n] = range[2*n+1];
   }
   #endif //OPS_MPI
+
   #ifdef OPS_DEBUG
   ops_register_args(args, "mgrid_populate_kernel_2");
   #endif
@@ -56,13 +39,12 @@ void ops_par_loop_mgrid_populate_kernel_2(char const *name, ops_block block, int
       &end[0],args[0].dat->size, args[0].stencil->stride) - offs[0][0];
 
 
-  int arg_idx[2];
   #ifdef OPS_MPI
-  arg_idx[0] = sb->decomp_disp[0]+start[0];
-  arg_idx[1] = sb->decomp_disp[1]+start[1];
+  int arg_idx_0 = arg_idx[0];
+  int arg_idx_1 = arg_idx[1];
   #else //OPS_MPI
-  arg_idx[0] = start[0];
-  arg_idx[1] = start[1];
+  int arg_idx_0 = start[0];
+  int arg_idx_1 = start[1];
   #endif //OPS_MPI
 
   //Timing
@@ -96,7 +78,7 @@ void ops_par_loop_mgrid_populate_kernel_2(char const *name, ops_block block, int
   ops_H_D_exchanges_host(args, 2);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[1].mpi_time += t1-t2;
+  OPS_kernels[0].mpi_time += t1-t2;
 
   xdim0 = args[0].dat->size[0]*args[0].dat->dim;
 
@@ -128,17 +110,17 @@ void ops_par_loop_mgrid_populate_kernel_2(char const *name, ops_block block, int
     //shift pointers to data y direction
     p_a[0]= p_a[0] + (dat0 * off0_1);
     #ifdef OPS_MPI
-    arg_idx[0] = sb->decomp_disp[0]+start[0];
+    arg_idx[0] = arg_idx_0;
     #else //OPS_MPI
     arg_idx[0] = start[0];
     #endif //OPS_MPI
     arg_idx[1]++;
   }
   ops_timers_core(&c2,&t2);
-  OPS_kernels[1].time += t2-t1;
+  OPS_kernels[0].time += t2-t1;
   ops_set_dirtybit_host(args, 2);
   ops_set_halo_dirtybit3(&args[0],range);
 
   //Update kernel record
-  OPS_kernels[1].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[0].transfer += ops_compute_transfer(dim, range, &arg0);
 }

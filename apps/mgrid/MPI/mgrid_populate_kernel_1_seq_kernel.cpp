@@ -72,7 +72,6 @@ void ops_par_loop_mgrid_populate_kernel_1(char const *name, ops_block block, int
   p_a[1] = (char *)arg_idx;
 
 
-
   ops_H_D_exchanges_host(args, 2);
   ops_halo_exchanges(args,2,range);
   ops_H_D_exchanges_host(args, 2);
