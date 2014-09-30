@@ -37,10 +37,16 @@ void ops_par_loop_mgrid_populate_kernel_1(char const *name, ops_block block, int
   #ifdef OPS_MPI
   sub_dat *sd = OPS_sub_dat_list[fine_grid_dat_idx];
   sub_block_list sb = OPS_sub_block_list[block->index];
+
+
   if (!sb->owned) return;
   for ( int n=0; n<2; n++ ){
-    start[n] = sd->decomp_disp[n] - dat->d_m[n];end[n] = sd->decomp_size[n] + dat->d_m[n] - dat->d_p[n]; ///**check
+    start[n] = sd->decomp_disp[n] - dat->d_m[n]; end[n] = start[n] + dat->d_m[n] + sd->decomp_size[n] - dat->d_p[n]; ///**check
+
+    //printf("sd->decomp_disp[n] = %d, sd->decomp_size[n] = %d, dat->d_m[n] = %d, dat->d_p[n] = %d\n",
+    //       sd->decomp_disp[n], sd->decomp_size[n], dat->d_m[n],dat->d_p[n]);
     //printf("name %s start[n] = %d end[n] = %d\n",dat->name,start[n],end[n]);
+
     if (start[n] >= range[2*n]) {
       start[n] = 0;
     }
@@ -49,13 +55,13 @@ void ops_par_loop_mgrid_populate_kernel_1(char const *name, ops_block block, int
     }
     if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];
     if (end[n] >= range[2*n+1]) {
-      end[n] = range[2*n+1] - sd->decomp_disp[n] + dat->d_m[n]; ///**check
+      end[n] = range[2*n+1] - (sd->decomp_disp[n] - dat->d_m[n]); ///**check
     }
     else {
-      end[n] = sd->decomp_size[n]-2; ///**check
+      end[n] = dat->d_m[n] + sd->decomp_size[n] - dat->d_p[n]; ///**check
     }
-    if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sd->decomp_disp[n]+sd->decomp_size[n]-2))///**check
-      end[n] += (range[2*n+1]-sd->decomp_disp[n]-sd->decomp_size[n]); ///**check
+    if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > (sd->decomp_disp[n] - dat->d_m[n] +sd->decomp_size[n]- dat->d_p[n])))///**check
+      end[n] += (range[2*n+1]-sd->decomp_disp[n]-(dat->d_m[n] + sd->decomp_size[n] - dat->d_p[n])); ///**check
     //printf("name %s start[%d] = %d end[%d] = %d\n",dat->name,n,start[n],n,end[n]);
   }
   #else
@@ -111,8 +117,8 @@ void ops_par_loop_mgrid_populate_kernel_1(char const *name, ops_block block, int
   arg_idx[1] = start[1];
   #endif //OPS_MPI
 
-  printf("start[0] = %d end[0] = %d, arg_idx[0] = %d\n",start[0],end[0],arg_idx[0]);
-  printf("start[1] = %d end[1] = %d, arg_idx[1] = %d\n",start[1],end[1],arg_idx[1]);
+  //printf("start[0] = %d end[0] = %d, arg_idx[0] = %d\n",start[0],end[0],arg_idx[0]);
+  //printf("start[1] = %d end[1] = %d, arg_idx[1] = %d\n",start[1],end[1],arg_idx[1]);
 
   //Timing
   double t1,t2,c1,c2;

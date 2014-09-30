@@ -272,7 +272,7 @@ void ops_decomp_dats(sub_block *sb) {
       sd->decomp_disp[d] = sb->decomp_disp[d]/dat->stride[d];
       sd->decomp_size[d] = MAX(0,sb->decomp_size[d]/dat->stride[d]);
       //sd->decomp_size[d] = sd->decomp_size[d]/dat->stride[d];
-      //printf("sb->decomp_size[%d] = %d\n",d,sb->decomp_size[d]);
+      
       
       
       if(sb->id_m[d] != MPI_PROC_NULL) {
@@ -298,7 +298,8 @@ void ops_decomp_dats(sub_block *sb) {
       dat->size[d] = sd->decomp_size[d] - sd->d_im[d] + sd->d_ip[d];
       prod[d] = prod[d-1]*dat->size[d];
       
-      printf("dat->name %s, sd->decomp_size[%d] = %d dat->stride[d] = %d\n",dat->name,d,sd->decomp_size[d],dat->stride[d]);
+      //printf("dat->name %s, sd->decomp_size[%d] = %d dat->stride[d] = %d\n",dat->name,d,sd->decomp_size[d],dat->stride[d]);
+      //printf("dat->name %s, sd->decomp_size[%d] = %d\n",dat->name,d,sd->decomp_size[d]);
     }
 
     if (!sb->owned) {sd->mpidat = NULL; continue;}
