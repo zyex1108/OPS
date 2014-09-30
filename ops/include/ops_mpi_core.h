@@ -180,6 +180,11 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest, const op
 void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src, const ops_int_halo *__restrict halo);
 void ops_comm_realloc(char **ptr, int size, int prev_size);
 
+/*******************************************************************************
+* Other External functions
+*******************************************************************************/
+int compute_ranges(ops_arg* args, ops_block block, int* range, int* start, int* end, int* arg_idx);
+
 #ifdef __cplusplus
 }
 #endif
