@@ -267,14 +267,11 @@ void ops_decomp_dats(sub_block *sb) {
       /*int zerobase_gbl_size = dat->size[d] + dat->d_m[d] - dat->d_p[d] + dat->base[d];
       sd->decomp_disp[d] = sb->decomp_disp[d];
       sd->decomp_size[d] = MAX(0,MIN(sb->decomp_size[d], zerobase_gbl_size - sb->decomp_disp[d]));*/
-      
+
       int zerobase_gbl_size = dat->size[d]+ dat->d_m[d] - dat->d_p[d] + dat->base[d];
       sd->decomp_disp[d] = sb->decomp_disp[d]/dat->stride[d];
       sd->decomp_size[d] = MAX(0,sb->decomp_size[d]/dat->stride[d]);
-      //sd->decomp_size[d] = sd->decomp_size[d]/dat->stride[d];
-      
-      
-      
+
       if(sb->id_m[d] != MPI_PROC_NULL) {
         //if not negative end, then there is no block-level left padding, but intra-block halo padding
         dat->base[d] = 0;
@@ -297,9 +294,6 @@ void ops_decomp_dats(sub_block *sb) {
 
       dat->size[d] = sd->decomp_size[d] - sd->d_im[d] + sd->d_ip[d];
       prod[d] = prod[d-1]*dat->size[d];
-      
-      //printf("dat->name %s, sd->decomp_size[%d] = %d dat->stride[d] = %d\n",dat->name,d,sd->decomp_size[d],dat->stride[d]);
-      //printf("dat->name %s, sd->decomp_size[%d] = %d\n",dat->name,d,sd->decomp_size[d]);
     }
 
     if (!sb->owned) {sd->mpidat = NULL; continue;}
@@ -326,7 +320,7 @@ void ops_decomp_dats(sub_block *sb) {
         sd->halos[MAX_DEPTH*n+d].blocklength = d*prod[n-1] * dat->elem_size;
         sd->halos[MAX_DEPTH*n+d].stride = prod[n] * dat->elem_size;
         //printf("Datatype: %d %d %d\n", prod[sb->ndim - 1]/prod[n], prod[n-1], prod[n]);
-        //printf("Datatype %d %d %d\n",sd->halos[MAX_DEPTH*n+d].count, sd->halos[MAX_DEPTH*n+d].blocklength, sd->halos[MAX_DEPTH*n+d].stride); 
+        //printf("Datatype %d %d %d\n",sd->halos[MAX_DEPTH*n+d].count, sd->halos[MAX_DEPTH*n+d].blocklength, sd->halos[MAX_DEPTH*n+d].stride);
       }
     }
   }
