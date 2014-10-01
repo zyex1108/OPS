@@ -127,6 +127,7 @@ void ops_partition_blocks(int **processes, int **proc_offsets, int **proc_disps,
       for (int d = 0; d < ndim; d++) (*proc_dimsplit)[i*OPS_MAX_DIM+d] = pdims[d];
       for (int d = ndim; d < OPS_MAX_DIM; d++) (*proc_dimsplit)[i*OPS_MAX_DIM+d] = 1;
 
+
       //Determine the size of the largest dataset defined on the block
       int max_sizes[OPS_MAX_DIM] = {1};
       ops_dat_entry *item, *tmp_item;
@@ -144,8 +145,8 @@ void ops_partition_blocks(int **processes, int **proc_offsets, int **proc_disps,
           int cumdim = 1;
           for (int d2 = d+1; d2 < ndim; d2++) cumdim *= dimsplit[d2];
           coords[d] = (j/cumdim)%dimsplit[d];
-          (*proc_disps)[((*proc_offsets)[i]+j)*OPS_MAX_DIM+d] = (coords[d]*max_sizes[d])/dimsplit[d];
-          (*proc_sizes)[((*proc_offsets)[i]+j)*OPS_MAX_DIM+d] = ((coords[d]+1)*max_sizes[d])/dimsplit[d] - (coords[d]*max_sizes[d])/dimsplit[d];
+          (*proc_disps)[((*proc_offsets)[i]+j)*OPS_MAX_DIM+d] = coords[d]*(max_sizes[d]/dimsplit[d]);
+          (*proc_sizes)[((*proc_offsets)[i]+j)*OPS_MAX_DIM+d] = MAX((coords[d]+1)*(max_sizes[d]/dimsplit[d]), (coords[d]+1==dimsplit[d])*max_sizes[d]) - coords[d]*(max_sizes[d]/dimsplit[d]);
         }
         for (int d = ndim; d < OPS_MAX_DIM; d++) {
           (*proc_disps)[((*proc_offsets)[i]+j)*OPS_MAX_DIM+d] = 0;
@@ -270,7 +271,11 @@ void ops_decomp_dats(sub_block *sb) {
 
       int zerobase_gbl_size = dat->size[d]+ dat->d_m[d] - dat->d_p[d] + dat->base[d];
       sd->decomp_disp[d] = sb->decomp_disp[d]/dat->stride[d];
-      sd->decomp_size[d] = MAX(0,sb->decomp_size[d]/dat->stride[d]);
+
+      if(sb->decomp_size[d]%dat->stride[d] == 0)
+        sd->decomp_size[d] = sb->decomp_size[d]/dat->stride[d];
+      else
+        sd->decomp_size[d] = sb->decomp_size[d]/dat->stride[d] + 1;
 
       if(sb->id_m[d] != MPI_PROC_NULL) {
         //if not negative end, then there is no block-level left padding, but intra-block halo padding
@@ -294,6 +299,7 @@ void ops_decomp_dats(sub_block *sb) {
 
       dat->size[d] = sd->decomp_size[d] - sd->d_im[d] + sd->d_ip[d];
       prod[d] = prod[d-1]*dat->size[d];
+
     }
 
     if (!sb->owned) {sd->mpidat = NULL; continue;}
@@ -737,7 +743,7 @@ int compute_ranges(ops_arg* args, ops_block block, int* range, int* start, int* 
     d_size[n] = dat->d_m[n] + sd->decomp_size[n] - dat->d_p[n];
     start[n] = sd->decomp_disp[n] - dat->d_m[n];
     end[n] = start[n] + d_size[n];
-
+    //printf("before start[%d] = %d end[%d] = %d\n",n,start[n],n,end[n]);
     if (start[n] >= range[2*n]) {
       start[n] = 0;
     }
