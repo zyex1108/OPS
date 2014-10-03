@@ -40,13 +40,7 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
     start_0[n]  = start[n]/stride_0[n];
     end_0[n]    = end[n]/stride_0[n];
   }
-  offs[0][0] = args[0].stencil->stride[0]*1;  //unit step in x dimension
-  offs[0][1] = off2D(1, &start_0[0],
-      &end_0[0],args[0].dat->size, args[0].stencil->stride) - offs[0][0];
 
-  offs[1][0] = args[1].stencil->stride[0]*1;  //unit step in x dimension
-  offs[1][1] = off2D(1, &start[0],
-      &end[0],args[1].dat->size, args[1].stencil->stride) - offs[1][0];
 
 
   #ifdef OPS_MPI
@@ -65,21 +59,46 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
   global_idx[1] = start[1];
   #endif //OPS_MPI
 
-  printf("start[0] = %d end[0] = %d, arg_idx[0] = %d\n",start[0],end[0],arg_idx[0]);
-  printf("start[1] = %d end[1] = %d, arg_idx[1] = %d\n",start[1],end[1],arg_idx[1]);
-
-  
   //Timing
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
+
+  sub_dat *sd_fine = OPS_sub_dat_list[args[1].dat->index];
+  sub_dat *sd_coars = OPS_sub_dat_list[args[0].dat->index];
+  int coars_start[2];
+  int coars_end[2];
+  int d_size[2];
+  d_size[0] = args[0].dat->d_m[0] + sd_coars->decomp_size[0] - args[0].dat->d_p[0];
+  d_size[1] = args[0].dat->d_m[1] + sd_coars->decomp_size[1] - args[0].dat->d_p[1];
+  
+  coars_start[0] = global_idx[0]/stride_0[0] - sd_coars->decomp_disp[0] + args[0].dat->d_m[0];
+  coars_start[1] = global_idx[1]/stride_0[1] - sd_coars->decomp_disp[1] + args[0].dat->d_m[1];
+  
+  coars_end[0] = coars_start[0] + d_size[0];
+  coars_end[1] = coars_start[1] + d_size[1];
+  
+  offs[0][0] = args[0].stencil->stride[0]*1;  //unit step in x dimension
+  offs[0][1] = off2D(1, &coars_start[0],
+      &coars_end[0],args[0].dat->size, args[0].stencil->stride) - offs[0][0];
+
+  offs[1][0] = args[1].stencil->stride[0]*1;  //unit step in x dimension
+  offs[1][1] = off2D(1, &start[0],
+      &end[0],args[1].dat->size, args[1].stencil->stride) - offs[1][0];
+  
   int off0_0 = offs[0][0];
   int off0_1 = offs[0][1];
   int dat0 = args[0].dat->elem_size;
   int off1_0 = offs[1][0];
   int off1_1 = offs[1][1];
   int dat1 = args[1].dat->elem_size;
-
+  
+  printf("%s global_idx[0] = %d, stride_0[0] = %d, sb_coars->decomp_disp[0] = %d, coars_start = %d, coars_end = %d\n",
+         args[0].dat->name, global_idx[0], stride_0[0], sd_coars->decomp_disp[0], coars_start[0], coars_end[0]);
+  
+  printf("start_0[n] %d  end_0[n]  = %d\n",start_0[0] ,end_0[0] );
+  //printf("start[0]/stride_0[0] = %d\n",start[0]/stride_0[0]);
+  
   //set up initial pointers and exchange halos if necessary
   int d_m[OPS_MAX_DIM];
   #ifdef OPS_MPI
@@ -88,10 +107,12 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
   for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d];
   #endif //OPS_MPI
   int base0 = dat0 * 1 * 
-    ((start[0]/stride_0[0]) * args[0].stencil->stride[0] - args[0].dat->base[0] - d_m[0]);
+    //((start[0]/stride_0[0]) * args[0].stencil->stride[0] - args[0].dat->base[0] - d_m[0]);
+    ((coars_start[0]) * args[0].stencil->stride[0] - args[0].dat->base[0]- d_m[0]);
   base0 = base0+ dat0 *
     args[0].dat->size[0] *
-    ((start[1]/stride_0[1]) * args[0].stencil->stride[1] - args[0].dat->base[1] - d_m[1]);
+    //((start[1]/stride_0[1]) * args[0].stencil->stride[1] - args[0].dat->base[1] - d_m[1]);
+    ((coars_start[1]) * args[0].stencil->stride[1] - args[0].dat->base[1] - d_m[1]);
   p_a[0] = (char *)args[0].data + base0;
 
   #ifdef OPS_MPI
@@ -138,7 +159,7 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
       p_a[0]= p_a[0] + (dat0 * off0_1);
     }
     else {
-      p_a[0]= p_a[0] - (dat0 * off0_0) * (end_0[0]-start_0[0]);
+      p_a[0]= p_a[0] - (dat0 * off0_0) * (coars_end[0]-coars_start[0]);
     }
     p_a[1]= p_a[1] + (dat1 * off1_1);
 

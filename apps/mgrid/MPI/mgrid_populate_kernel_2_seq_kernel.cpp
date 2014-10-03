@@ -47,9 +47,6 @@ void ops_par_loop_mgrid_populate_kernel_2(char const *name, ops_block block, int
   int arg_idx_1 = start[1];
   #endif //OPS_MPI
 
-  //printf("start[0] = %d end[0] = %d, arg_idx[0] = %d\n",start[0],end[0],arg_idx[0]);
-  //printf("start[1] = %d end[1] = %d, arg_idx[1] = %d\n",start[1],end[1],arg_idx[1]);
-  
   //Timing
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
