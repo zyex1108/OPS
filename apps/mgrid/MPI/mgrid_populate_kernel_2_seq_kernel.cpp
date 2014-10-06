@@ -42,14 +42,14 @@ void ops_par_loop_mgrid_populate_kernel_2(char const *name, ops_block block, int
   int arg_idx_1 = start[1];
   #endif //OPS_MPI
 
+  //Timing
+  double t1,t2,c1,c2;
+  ops_timers_core(&c2,&t2);
+
   offs[0][0] = args[0].stencil->stride[0]*1;  //unit step in x dimension
   offs[0][1] = off2D(1, &start[0],
       &end[0],args[0].dat->size, args[0].stencil->stride) - offs[0][0];
 
-
-  //Timing
-  double t1,t2,c1,c2;
-  ops_timers_core(&c2,&t2);
 
   int off0_0 = offs[0][0];
   int off0_1 = offs[0][1];

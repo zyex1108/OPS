@@ -288,13 +288,18 @@ def ops_gen_mpi(master, date, consts, kernels):
       code('#endif //OPS_MPI')
     code('')
     
+    comm('Timing')
+    code('double t1,t2,c1,c2;')
+    code('ops_timers_core(&c2,&t2);')
+    code('')
+    
     if MULTI_GRID:
       for n in range (0, nargs):
         if restrict[n]  == 1 :
           code('int start_'+str(n)+'[2]; int end_'+str(n)+'[2]; int stride_'+str(n)+'[2];')
           FOR('n','0',str(NDIM))
           code('stride_'+str(n)+'[n] = args['+str(n)+'].stencil->mgrid_stride[n];')
-          code('start_'+str(n)+'[n]  = start[n];')
+          code('start_'+str(n)+'[n]  = start[n]*stride_'+str(n)+'[n];')
           code('end_'+str(n)+'[n]    = end[n];')
           ENDFOR()
         elif prolong[n] == 1:
@@ -327,12 +332,6 @@ def ops_gen_mpi(master, date, consts, kernels):
         code('')
 
     code('')
-    
-
-    comm('Timing')
-    code('double t1,t2,c1,c2;')
-    code('ops_timers_core(&c2,&t2);')
-    code('')
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
@@ -354,7 +353,7 @@ def ops_gen_mpi(master, date, consts, kernels):
         if prolong[n] == 1:
           code('  ((start_'+str(n)+'[0]) * args[0].stencil->stride[0] - args[0].dat->base[0]- d_m[0]);')
         elif restrict[n] == 1:
-          code('  ((start[0]*stride_'+str(n)+'[0]) * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->base[0] - d_m[0]);')
+          code('  ((start_'+str(n)+'[0]) * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->base[0] - d_m[0]);')
         else:
           code('  (start[0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->base[0] - d_m[0]);')
         for d in range (1, NDIM):
@@ -365,7 +364,7 @@ def ops_gen_mpi(master, date, consts, kernels):
           if prolong[n] == 1:       
             code('  ((start_'+str(n)+'['+str(d)+']) * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->base['+str(d)+'] - d_m['+str(d)+']);')
           elif restrict[n] == 1:
-            code('  ((start['+str(d)+']*stride_'+str(n)+'['+str(d)+']) * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->base['+str(d)+'] - d_m['+str(d)+']);')
+            code('  ((start_'+str(n)+'['+str(d)+']) * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->base['+str(d)+'] - d_m['+str(d)+']);')
           else:
             code('  (start['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->base['+str(d)+'] - d_m['+str(d)+']);')
         code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data + base'+str(n)+';')

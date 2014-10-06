@@ -50,6 +50,10 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
   global_idx[1] = start[1];
   #endif //OPS_MPI
 
+  //Timing
+  double t1,t2,c1,c2;
+  ops_timers_core(&c2,&t2);
+
   //This arg has a prolong stencil - so create different ranges
   sub_dat *sd0 = OPS_sub_dat_list[args[0].dat->index];
   int start_0[2]; int end_0[2]; int stride_0[2];int d_size_0[2];
@@ -67,10 +71,6 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
   offs[1][1] = off2D(1, &start[0],
       &end[0],args[1].dat->size, args[1].stencil->stride) - offs[1][0];
 
-
-  //Timing
-  double t1,t2,c1,c2;
-  ops_timers_core(&c2,&t2);
 
   int off0_0 = offs[0][0];
   int off0_1 = offs[0][1];

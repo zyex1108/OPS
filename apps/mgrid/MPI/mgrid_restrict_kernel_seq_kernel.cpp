@@ -50,10 +50,14 @@ void ops_par_loop_mgrid_restrict_kernel(char const *name, ops_block block, int d
   global_idx[1] = start[1];
   #endif //OPS_MPI
 
+  //Timing
+  double t1,t2,c1,c2;
+  ops_timers_core(&c2,&t2);
+
   int start_0[2]; int end_0[2]; int stride_0[2];
   for ( int n=0; n<2; n++ ){
     stride_0[n] = args[0].stencil->mgrid_stride[n];
-    start_0[n]  = start[n];
+    start_0[n]  = start[n]*stride_0[n];
     end_0[n]    = end[n];
   }
   offs[0][0] = args[0].stencil->stride[0]*1;  //unit step in x dimension
@@ -64,10 +68,6 @@ void ops_par_loop_mgrid_restrict_kernel(char const *name, ops_block block, int d
   offs[1][1] = off2D(1, &start[0],
       &end[0],args[1].dat->size, args[1].stencil->stride) - offs[1][0];
 
-
-  //Timing
-  double t1,t2,c1,c2;
-  ops_timers_core(&c2,&t2);
 
   int off0_0 = offs[0][0];
   int off0_1 = offs[0][1];
@@ -84,10 +84,10 @@ void ops_par_loop_mgrid_restrict_kernel(char const *name, ops_block block, int d
   for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d];
   #endif //OPS_MPI
   int base0 = dat0 * 1 * 
-    ((start[0]*stride_0[0]) * args[0].stencil->stride[0] - args[0].dat->base[0] - d_m[0]);
+    ((start_0[0]) * args[0].stencil->stride[0] - args[0].dat->base[0] - d_m[0]);
   base0 = base0+ dat0 *
     args[0].dat->size[0] *
-    ((start[1]*stride_0[1]) * args[0].stencil->stride[1] - args[0].dat->base[1] - d_m[1]);
+    ((start_0[1]) * args[0].stencil->stride[1] - args[0].dat->base[1] - d_m[1]);
   p_a[0] = (char *)args[0].data + base0;
 
   #ifdef OPS_MPI
