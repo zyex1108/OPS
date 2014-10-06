@@ -34,12 +34,7 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
   ops_register_args(args, "mgrid_prolong_kernel");
   #endif
 
-  int start_0[2]; int end_0[2]; int stride_0[2];
-  for ( int n=0; n<2; n++ ){
-    stride_0[n] = args[0].stencil->mgrid_stride[n];
-    start_0[n]  = start[n]/stride_0[n];
-    end_0[n]    = end[n]/stride_0[n];
-  }
+
 
 
 
@@ -63,25 +58,20 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
   double t1,t2,c1,c2;
   ops_timers_core(&c2,&t2);
 
-
-  sub_dat *sd_fine = OPS_sub_dat_list[args[1].dat->index];
-  sub_dat *sd_coars = OPS_sub_dat_list[args[0].dat->index];
-  int coars_start[2];
-  int coars_end[2];
-  int d_size[2];
-  d_size[0] = args[0].dat->d_m[0] + sd_coars->decomp_size[0] - args[0].dat->d_p[0];
-  d_size[1] = args[0].dat->d_m[1] + sd_coars->decomp_size[1] - args[0].dat->d_p[1];
-  
-  coars_start[0] = global_idx[0]/stride_0[0] - sd_coars->decomp_disp[0] + args[0].dat->d_m[0];
-  coars_start[1] = global_idx[1]/stride_0[1] - sd_coars->decomp_disp[1] + args[0].dat->d_m[1];
-  
-  coars_end[0] = coars_start[0] + d_size[0];
-  coars_end[1] = coars_start[1] + d_size[1];
+  /*This arg has a prolong stencil - so create different ranges*/
+  sub_dat *sd0 = OPS_sub_dat_list[args[0].dat->index];
+  int start_0[2]; int end_0[2]; int stride_0[2];int d_size_0[2];
+  for ( int n=0; n<2; n++ ){
+    stride_0[n] = args[0].stencil->mgrid_stride[n];
+    d_size_0[n] = args[0].dat->d_m[n] + sd0->decomp_size[n] - args[0].dat->d_p[n];
+    start_0[n] = global_idx[n]/stride_0[n] - sd0->decomp_disp[n] + args[0].dat->d_m[n];
+    end_0[n] = start_0[n] + d_size_0[n];
+  }
   
   offs[0][0] = args[0].stencil->stride[0]*1;  //unit step in x dimension
-  offs[0][1] = off2D(1, &coars_start[0],
-      &coars_end[0],args[0].dat->size, args[0].stencil->stride) - offs[0][0];
-
+  offs[0][1] = off2D(1, &start_0[0],
+      &end_0[0],args[0].dat->size, args[0].stencil->stride) - offs[0][0];
+  
   offs[1][0] = args[1].stencil->stride[0]*1;  //unit step in x dimension
   offs[1][1] = off2D(1, &start[0],
       &end[0],args[1].dat->size, args[1].stencil->stride) - offs[1][0];
@@ -93,11 +83,10 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
   int off1_1 = offs[1][1];
   int dat1 = args[1].dat->elem_size;
   
-  printf("%s global_idx[0] = %d, stride_0[0] = %d, sb_coars->decomp_disp[0] = %d, coars_start = %d, coars_end = %d\n",
-         args[0].dat->name, global_idx[0], stride_0[0], sd_coars->decomp_disp[0], coars_start[0], coars_end[0]);
+  printf("%s global_idx[0] = %d, stride_0[0] = %d, sb_coars->decomp_disp[0] = %d, start_0 = %d, end_0 = %d\n",
+         args[0].dat->name, global_idx[0], stride_0[0], sd0->decomp_disp[0], start_0[0], end_0[0]);
   
   printf("start_0[n] %d  end_0[n]  = %d\n",start_0[0] ,end_0[0] );
-  //printf("start[0]/stride_0[0] = %d\n",start[0]/stride_0[0]);
   
   //set up initial pointers and exchange halos if necessary
   int d_m[OPS_MAX_DIM];
@@ -107,12 +96,10 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
   for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d];
   #endif //OPS_MPI
   int base0 = dat0 * 1 * 
-    //((start[0]/stride_0[0]) * args[0].stencil->stride[0] - args[0].dat->base[0] - d_m[0]);
-    ((coars_start[0]) * args[0].stencil->stride[0] - args[0].dat->base[0]- d_m[0]);
+    ((start_0[0]) * args[0].stencil->stride[0] - args[0].dat->base[0]- d_m[0]);
   base0 = base0+ dat0 *
     args[0].dat->size[0] *
-    //((start[1]/stride_0[1]) * args[0].stencil->stride[1] - args[0].dat->base[1] - d_m[1]);
-    ((coars_start[1]) * args[0].stencil->stride[1] - args[0].dat->base[1] - d_m[1]);
+    ((start_0[1]) * args[0].stencil->stride[1] - args[0].dat->base[1] - d_m[1]);
   p_a[0] = (char *)args[0].data + base0;
 
   #ifdef OPS_MPI
@@ -128,7 +115,6 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
   p_a[1] = (char *)args[1].data + base1;
 
   p_a[2] = (char *)arg_idx;
-
 
   ops_H_D_exchanges_host(args, 3);
   ops_halo_exchanges(args,3,range);
@@ -159,7 +145,7 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
       p_a[0]= p_a[0] + (dat0 * off0_1);
     }
     else {
-      p_a[0]= p_a[0] - (dat0 * off0_0) * (coars_end[0]-coars_start[0]);
+      p_a[0]= p_a[0] - (dat0 * off0_0) * (end_0[0]-start_0[0]);
     }
     p_a[1]= p_a[1] + (dat1 * off1_1);
 
