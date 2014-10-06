@@ -34,10 +34,6 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
   ops_register_args(args, "mgrid_prolong_kernel");
   #endif
 
-
-
-
-
   #ifdef OPS_MPI
   int arg_idx_0 = arg_idx[0];
   int arg_idx_1 = arg_idx[1];
@@ -54,11 +50,7 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
   global_idx[1] = start[1];
   #endif //OPS_MPI
 
-  //Timing
-  double t1,t2,c1,c2;
-  ops_timers_core(&c2,&t2);
-
-  /*This arg has a prolong stencil - so create different ranges*/
+  //This arg has a prolong stencil - so create different ranges
   sub_dat *sd0 = OPS_sub_dat_list[args[0].dat->index];
   int start_0[2]; int end_0[2]; int stride_0[2];int d_size_0[2];
   for ( int n=0; n<2; n++ ){
@@ -67,27 +59,26 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
     start_0[n] = global_idx[n]/stride_0[n] - sd0->decomp_disp[n] + args[0].dat->d_m[n];
     end_0[n] = start_0[n] + d_size_0[n];
   }
-  
   offs[0][0] = args[0].stencil->stride[0]*1;  //unit step in x dimension
   offs[0][1] = off2D(1, &start_0[0],
       &end_0[0],args[0].dat->size, args[0].stencil->stride) - offs[0][0];
-  
+
   offs[1][0] = args[1].stencil->stride[0]*1;  //unit step in x dimension
   offs[1][1] = off2D(1, &start[0],
       &end[0],args[1].dat->size, args[1].stencil->stride) - offs[1][0];
-  
+
+
+  //Timing
+  double t1,t2,c1,c2;
+  ops_timers_core(&c2,&t2);
+
   int off0_0 = offs[0][0];
   int off0_1 = offs[0][1];
   int dat0 = args[0].dat->elem_size;
   int off1_0 = offs[1][0];
   int off1_1 = offs[1][1];
   int dat1 = args[1].dat->elem_size;
-  
-  printf("%s global_idx[0] = %d, stride_0[0] = %d, sb_coars->decomp_disp[0] = %d, start_0 = %d, end_0 = %d\n",
-         args[0].dat->name, global_idx[0], stride_0[0], sd0->decomp_disp[0], start_0[0], end_0[0]);
-  
-  printf("start_0[n] %d  end_0[n]  = %d\n",start_0[0] ,end_0[0] );
-  
+
   //set up initial pointers and exchange halos if necessary
   int d_m[OPS_MAX_DIM];
   #ifdef OPS_MPI
@@ -115,6 +106,7 @@ void ops_par_loop_mgrid_prolong_kernel(char const *name, ops_block block, int di
   p_a[1] = (char *)args[1].data + base1;
 
   p_a[2] = (char *)arg_idx;
+
 
   ops_H_D_exchanges_host(args, 3);
   ops_halo_exchanges(args,3,range);

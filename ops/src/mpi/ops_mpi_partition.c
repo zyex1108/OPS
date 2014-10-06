@@ -275,7 +275,7 @@ void ops_decomp_dats(sub_block *sb) {
       int remainder = sb->decomp_size[d]%dat->stride[d];
       sd->decomp_size[d]  = sb->decomp_size[d]/dat->stride[d];
       if(remainder != 0 && sb->coords[d] > remainder) sd->decomp_size[d] = sd->decomp_size[d] + 1;
-      printf("%s sb->coords[%d] = %d, remainder  = %d, sd->decomp_size[%d] = %d\n",dat->name, d, sb->coords[d],remainder, d, sd->decomp_size[d]);
+      //printf("%s sb->coords[%d] = %d, remainder  = %d, sd->decomp_size[%d] = %d\n",dat->name, d, sb->coords[d],remainder, d, sd->decomp_size[d]);
 
       if(sb->id_m[d] != MPI_PROC_NULL) {
         //if not negative end, then there is no block-level left padding, but intra-block halo padding

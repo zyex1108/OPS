@@ -34,11 +34,6 @@ void ops_par_loop_mgrid_populate_kernel_2(char const *name, ops_block block, int
   ops_register_args(args, "mgrid_populate_kernel_2");
   #endif
 
-  offs[0][0] = args[0].stencil->stride[0]*1;  //unit step in x dimension
-  offs[0][1] = off2D(1, &start[0],
-      &end[0],args[0].dat->size, args[0].stencil->stride) - offs[0][0];
-
-
   #ifdef OPS_MPI
   int arg_idx_0 = arg_idx[0];
   int arg_idx_1 = arg_idx[1];
@@ -46,6 +41,11 @@ void ops_par_loop_mgrid_populate_kernel_2(char const *name, ops_block block, int
   int arg_idx_0 = start[0];
   int arg_idx_1 = start[1];
   #endif //OPS_MPI
+
+  offs[0][0] = args[0].stencil->stride[0]*1;  //unit step in x dimension
+  offs[0][1] = off2D(1, &start[0],
+      &end[0],args[0].dat->size, args[0].stencil->stride) - offs[0][0];
+
 
   //Timing
   double t1,t2,c1,c2;

@@ -268,6 +268,26 @@ def ops_gen_mpi(master, date, consts, kernels):
     code('#endif')
     code('')
 
+    if arg_idx:
+      code('#ifdef OPS_MPI')
+      for n in range (0,NDIM):
+        code('int arg_idx_'+str(n)+' = arg_idx['+str(n)+'];')
+      code('#else //OPS_MPI')
+      for n in range (0,NDIM):
+        code('int arg_idx_'+str(n)+' = start['+str(n)+'];')
+      code('#endif //OPS_MPI')
+    
+    if MULTI_GRID:
+      code('int global_idx['+str(NDIM)+'];')
+      code('#ifdef OPS_MPI')
+      for n in range (0,NDIM):
+        code('global_idx['+str(n)+'] = arg_idx['+str(n)+'];')
+      code('#else //OPS_MPI')
+      for n in range (0,NDIM):
+        code('global_idx['+str(n)+'] = start['+str(n)+'];')
+      code('#endif //OPS_MPI')
+    code('')
+    
     if MULTI_GRID:
       for n in range (0, nargs):
         if restrict[n]  == 1 :
@@ -278,11 +298,14 @@ def ops_gen_mpi(master, date, consts, kernels):
           code('end_'+str(n)+'[n]    = end[n];')
           ENDFOR()
         elif prolong[n] == 1:
-          code('int start_'+str(n)+'[2]; int end_'+str(n)+'[2]; int stride_'+str(n)+'[2];')
+          comm('This arg has a prolong stencil - so create different ranges')
+          code('sub_dat *sd'+str(n)+' = OPS_sub_dat_list[args['+str(n)+'].dat->index];')
+          code('int start_'+str(n)+'[2]; int end_'+str(n)+'[2]; int stride_'+str(n)+'[2];int d_size_'+str(n)+'[2];')
           FOR('n','0',str(NDIM))
           code('stride_'+str(n)+'[n] = args['+str(n)+'].stencil->mgrid_stride[n];')
-          code('start_'+str(n)+'[n]  = start[n]/stride_'+str(n)+'[n];')
-          code('end_'+str(n)+'[n]    = end[n]/stride_'+str(n)+'[n];')
+          code('d_size_'+str(n)+'[n] = args['+str(n)+'].dat->d_m[n] + sd'+str(n)+'->decomp_size[n] - args['+str(n)+'].dat->d_p[n];')
+          code('start_'+str(n)+'[n] = global_idx[n]/stride_'+str(n)+'[n] - sd'+str(n)+'->decomp_disp[n] + args['+str(n)+'].dat->d_m[n];')
+          code('end_'+str(n)+'[n] = start_'+str(n)+'[n] + d_size_'+str(n)+'[n];')
           ENDFOR()
       
     for n in range (0, nargs):
@@ -304,27 +327,7 @@ def ops_gen_mpi(master, date, consts, kernels):
         code('')
 
     code('')
-    if arg_idx:
-      code('#ifdef OPS_MPI')
-      for n in range (0,NDIM):
-        code('int arg_idx_'+str(n)+' = arg_idx['+str(n)+'];')
-      code('#else //OPS_MPI')
-      for n in range (0,NDIM):
-        code('int arg_idx_'+str(n)+' = start['+str(n)+'];')
-      code('#endif //OPS_MPI')
     
-    if MULTI_GRID:
-      code('int global_idx['+str(NDIM)+'];')
-      code('#ifdef OPS_MPI')
-      for n in range (0,NDIM):
-        code('global_idx['+str(n)+'] = arg_idx['+str(n)+'];')
-      code('#else //OPS_MPI')
-      for n in range (0,NDIM):
-        code('global_idx['+str(n)+'] = start['+str(n)+'];')
-      code('#endif //OPS_MPI')
-    
-
-    code('')
 
     comm('Timing')
     code('double t1,t2,c1,c2;')
@@ -349,7 +352,7 @@ def ops_gen_mpi(master, date, consts, kernels):
         code('#endif //OPS_MPI')
         code('int base'+str(n)+' = dat'+str(n)+' * 1 * ')
         if prolong[n] == 1:
-          code('  ((start[0]/stride_'+str(n)+'[0]) * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->base[0] - d_m[0]);')
+          code('  ((start_'+str(n)+'[0]) * args[0].stencil->stride[0] - args[0].dat->base[0]- d_m[0]);')
         elif restrict[n] == 1:
           code('  ((start[0]*stride_'+str(n)+'[0]) * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->base[0] - d_m[0]);')
         else:
@@ -359,8 +362,8 @@ def ops_gen_mpi(master, date, consts, kernels):
           for d2 in range (0,d):
             line = line + depth*' '+'  args['+str(n)+'].dat->size['+str(d2)+'] *\n'
           code(line[:-1])
-          if prolong[n] == 1:
-            code('  ((start['+str(d)+']/stride_'+str(n)+'['+str(d)+']) * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->base['+str(d)+'] - d_m['+str(d)+']);')
+          if prolong[n] == 1:       
+            code('  ((start_'+str(n)+'['+str(d)+']) * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->base['+str(d)+'] - d_m['+str(d)+']);')
           elif restrict[n] == 1:
             code('  ((start['+str(d)+']*stride_'+str(n)+'['+str(d)+']) * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->base['+str(d)+'] - d_m['+str(d)+']);')
           else:
@@ -535,7 +538,6 @@ def ops_gen_mpi(master, date, consts, kernels):
           if restrict[n] == 1:
             code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_0) * stride_'+str(n)+'[0];')
           elif prolong[n] == 1:
-            #code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_0) * (((global_idx[0]+1) % stride_'+str(n)+'[0] == start[0]% stride_'+str(n)+'[0])?1:0);')
             code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_0) * (((global_idx[0]+1) % stride_'+str(n)+'[0] == 0)?1:0);')
           else:
             code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_0);')            
@@ -554,7 +556,6 @@ def ops_gen_mpi(master, date, consts, kernels):
           if restrict[n] == 1:
             code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_1) * stride_'+str(n)+'[1];')
           elif prolong[n] == 1:
-            #IF('(global_idx[1]+1) % stride_'+str(n)+'[1] == start[1] % stride_'+str(n)+'[1]')
             IF('(global_idx[1]+1) % stride_'+str(n)+'[1] == 0')
             code('p_a['+str(n)+']= p_a['+str(n)+'] + (dat'+str(n)+' * off'+str(n)+'_1);')
             ENDIF()
