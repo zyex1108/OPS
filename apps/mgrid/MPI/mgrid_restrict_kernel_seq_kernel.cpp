@@ -14,42 +14,41 @@ void ops_par_loop_mgrid_restrict_kernel(char const *name, ops_block block, int d
 
 
 
-  ops_timing_realloc(3,"mgrid_restrict_kernel");
-  OPS_kernels[3].count++;
+  ops_timing_realloc(2,"mgrid_restrict_kernel");
+  OPS_kernels[2].count++;
 
   //compute locally allocated range for the sub-block
   int start[2];
   int end[2];
+  int arg_idx[2];
 
   #ifdef OPS_MPI
-  sub_block_list sb = OPS_sub_block_list[block->index];
-  if (!sb->owned) return;
-  for ( int n=0; n<2; n++ ){
-    start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
-    if (start[n] >= range[2*n]) {
-      start[n] = 0;
-    }
-    else {
-      start[n] = range[2*n] - start[n];
-    }
-    if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];
-    if (end[n] >= range[2*n+1]) {
-      end[n] = range[2*n+1] - sb->decomp_disp[n];
-    }
-    else {
-      end[n] = sb->decomp_size[n];
-    }
-    if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))
-      end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
-  }
+  if (compute_ranges(args, block, range, start, end, arg_idx) < 0) return;
   #else //OPS_MPI
   for ( int n=0; n<2; n++ ){
     start[n] = range[2*n];end[n] = range[2*n+1];
   }
   #endif //OPS_MPI
+
   #ifdef OPS_DEBUG
   ops_register_args(args, "mgrid_restrict_kernel");
   #endif
+
+  #ifdef OPS_MPI
+  int arg_idx_0 = arg_idx[0];
+  int arg_idx_1 = arg_idx[1];
+  #else //OPS_MPI
+  int arg_idx_0 = start[0];
+  int arg_idx_1 = start[1];
+  #endif //OPS_MPI
+  int global_idx[2];
+  #ifdef OPS_MPI
+  global_idx[0] = arg_idx[0];
+  global_idx[1] = arg_idx[1];
+  #else //OPS_MPI
+  global_idx[0] = start[0];
+  global_idx[1] = start[1];
+  #endif //OPS_MPI
 
   int start_0[2]; int end_0[2]; int stride_0[2];
   for ( int n=0; n<2; n++ ){
@@ -65,23 +64,6 @@ void ops_par_loop_mgrid_restrict_kernel(char const *name, ops_block block, int d
   offs[1][1] = off2D(1, &start[0],
       &end[0],args[1].dat->size, args[1].stencil->stride) - offs[1][0];
 
-
-  int arg_idx[2];
-  #ifdef OPS_MPI
-  arg_idx[0] = sb->decomp_disp[0]+start[0];
-  arg_idx[1] = sb->decomp_disp[1]+start[1];
-  #else //OPS_MPI
-  arg_idx[0] = start[0];
-  arg_idx[1] = start[1];
-  #endif //OPS_MPI
-  int global_idx[2];
-  #ifdef OPS_MPI
-  global_idx[0] = sb->decomp_disp[0]+start[0];
-  global_idx[1] = sb->decomp_disp[1]+start[1];
-  #else //OPS_MPI
-  global_idx[0] = start[0];
-  global_idx[1] = start[1];
-  #endif //OPS_MPI
 
   //Timing
   double t1,t2,c1,c2;
@@ -123,13 +105,12 @@ void ops_par_loop_mgrid_restrict_kernel(char const *name, ops_block block, int d
   p_a[2] = (char *)arg_idx;
 
 
-
   ops_H_D_exchanges_host(args, 3);
   ops_halo_exchanges(args,3,range);
   ops_H_D_exchanges_host(args, 3);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[3].mpi_time += t1-t2;
+  OPS_kernels[2].mpi_time += t1-t2;
 
   xdim0 = args[0].dat->size[0]*args[0].dat->dim;
   xdim1 = args[1].dat->size[0]*args[1].dat->dim;
@@ -140,7 +121,6 @@ void ops_par_loop_mgrid_restrict_kernel(char const *name, ops_block block, int d
     for( n_x=start[0]; n_x<end[0]; n_x++ ) {
       //call kernel function, passing in pointers to data
       mgrid_restrict_kernel(  (double *)p_a[0], (double *)p_a[1], (int *)p_a[2] );
-
 
       //shift pointers to data x direction
       p_a[0]= p_a[0] + (dat0 * off0_0) * stride_0[0];
@@ -154,25 +134,25 @@ void ops_par_loop_mgrid_restrict_kernel(char const *name, ops_block block, int d
     p_a[1]= p_a[1] + (dat1 * off1_1);
 
     #ifdef OPS_MPI
-    arg_idx[0] = sb->decomp_disp[0]+start[0];
+    arg_idx[0] = arg_idx_0;
     #else //OPS_MPI
     arg_idx[0] = start[0];
     #endif //OPS_MPI
     arg_idx[1]++;
 
     #ifdef OPS_MPI
-    global_idx[0] = sb->decomp_disp[0]+start[0];
+    global_idx[0] = arg_idx_0;
     #else //OPS_MPI
     global_idx[0] = start[0];
     #endif //OPS_MPI
     global_idx[1]++;
   }
   ops_timers_core(&c2,&t2);
-  OPS_kernels[3].time += t2-t1;
+  OPS_kernels[2].time += t2-t1;
   ops_set_dirtybit_host(args, 3);
   ops_set_halo_dirtybit3(&args[1],range);
 
   //Update kernel record
-  OPS_kernels[3].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[3].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[2].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[2].transfer += ops_compute_transfer(dim, range, &arg1);
 }
