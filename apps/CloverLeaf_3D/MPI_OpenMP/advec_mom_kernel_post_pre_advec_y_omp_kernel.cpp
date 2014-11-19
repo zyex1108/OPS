@@ -39,8 +39,12 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_y(char const *name, ops_block 
 
 
 
-  ops_timing_realloc(22,"advec_mom_kernel_post_pre_advec_y");
-  OPS_kernels[22].count++;
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_before(args,5,range,30)) return;
+  #endif
+
+  ops_timing_realloc(30,"advec_mom_kernel_post_pre_advec_y");
+  OPS_kernels[30].count++;
 
   //compute locally allocated range for the sub-block
 
@@ -136,15 +140,15 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_y(char const *name, ops_block 
   #else
   int nthreads = 1;
   #endif
-  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  xdim0 = args[0].dat->size[0];
   ydim0 = args[0].dat->size[1];
-  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  xdim1 = args[1].dat->size[0];
   ydim1 = args[1].dat->size[1];
-  xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+  xdim2 = args[2].dat->size[0];
   ydim2 = args[2].dat->size[1];
-  xdim3 = args[3].dat->size[0]*args[3].dat->dim;
+  xdim3 = args[3].dat->size[0];
   ydim3 = args[3].dat->size[1];
-  xdim4 = args[4].dat->size[0]*args[4].dat->dim;
+  xdim4 = args[4].dat->size[0];
   ydim4 = args[4].dat->size[1];
 
   ops_H_D_exchanges_host(args, 5);
@@ -154,7 +158,7 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_y(char const *name, ops_block 
 
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[22].mpi_time += t2-t1;
+  OPS_kernels[30].mpi_time += t2-t1;
 
 
   #pragma omp parallel for
@@ -260,8 +264,8 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_y(char const *name, ops_block 
           //call kernel function, passing in pointers to data -vectorised
           #pragma simd
           for ( int i=0; i<SIMD_VEC; i++ ){
-            advec_mom_kernel_post_pre_advec_y(  (double * )p_a[0]+ i*1, (const double * )p_a[1]+ i*1, (const double * )p_a[2]+ i*1,
-           (double * )p_a[3]+ i*1, (const double * )p_a[4]+ i*1 );
+            advec_mom_kernel_post_pre_advec_y(  (double * )p_a[0]+ i*1*1, (const double * )p_a[1]+ i*1*1, (const double * )p_a[2]+ i*1*1,
+           (double * )p_a[3]+ i*1*1, (const double * )p_a[4]+ i*1*1 );
 
           }
 
@@ -304,7 +308,7 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_y(char const *name, ops_block 
   }
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[22].time += t1-t2;
+  OPS_kernels[30].time += t1-t2;
 
   ops_set_dirtybit_host(args, 5);
 
@@ -313,10 +317,10 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_y(char const *name, ops_block 
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
-  OPS_kernels[22].mpi_time += t2-t1;
-  OPS_kernels[22].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[22].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[22].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[22].transfer += ops_compute_transfer(dim, range, &arg3);
-  OPS_kernels[22].transfer += ops_compute_transfer(dim, range, &arg4);
+  OPS_kernels[30].mpi_time += t2-t1;
+  OPS_kernels[30].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[30].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[30].transfer += ops_compute_transfer(dim, range, &arg2);
+  OPS_kernels[30].transfer += ops_compute_transfer(dim, range, &arg3);
+  OPS_kernels[30].transfer += ops_compute_transfer(dim, range, &arg4);
 }

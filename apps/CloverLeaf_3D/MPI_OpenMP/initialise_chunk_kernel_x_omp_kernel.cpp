@@ -40,8 +40,12 @@ void ops_par_loop_initialise_chunk_kernel_x(char const *name, ops_block block, i
 
 
 
-  ops_timing_realloc(133,"initialise_chunk_kernel_x");
-  OPS_kernels[133].count++;
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_before(args,3,range,49)) return;
+  #endif
+
+  ops_timing_realloc(49,"initialise_chunk_kernel_x");
+  OPS_kernels[49].count++;
 
   //compute locally allocated range for the sub-block
 
@@ -117,11 +121,11 @@ void ops_par_loop_initialise_chunk_kernel_x(char const *name, ops_block block, i
   #else
   int nthreads = 1;
   #endif
-  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  xdim0 = args[0].dat->size[0];
   ydim0 = args[0].dat->size[1];
-  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  xdim1 = args[1].dat->size[0];
   ydim1 = args[1].dat->size[1];
-  xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+  xdim2 = args[2].dat->size[0];
   ydim2 = args[2].dat->size[1];
 
   ops_H_D_exchanges_host(args, 3);
@@ -131,7 +135,7 @@ void ops_par_loop_initialise_chunk_kernel_x(char const *name, ops_block block, i
 
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[133].mpi_time += t2-t1;
+  OPS_kernels[49].mpi_time += t2-t1;
 
 
   #pragma omp parallel for
@@ -205,7 +209,7 @@ void ops_par_loop_initialise_chunk_kernel_x(char const *name, ops_block block, i
           //call kernel function, passing in pointers to data -vectorised
           #pragma simd
           for ( int i=0; i<SIMD_VEC; i++ ){
-            initialise_chunk_kernel_x(  (double * )p_a[0]+ i*1, (const int * )p_a[1]+ i*1, (double * )p_a[2]+ i*1 );
+            initialise_chunk_kernel_x(  (double * )p_a[0]+ i*1*1, (const int * )p_a[1]+ i*1*1, (double * )p_a[2]+ i*1*1 );
 
           }
 
@@ -239,7 +243,7 @@ void ops_par_loop_initialise_chunk_kernel_x(char const *name, ops_block block, i
   }
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[133].time += t1-t2;
+  OPS_kernels[49].time += t1-t2;
 
   ops_set_dirtybit_host(args, 3);
 
@@ -248,8 +252,8 @@ void ops_par_loop_initialise_chunk_kernel_x(char const *name, ops_block block, i
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
-  OPS_kernels[133].mpi_time += t2-t1;
-  OPS_kernels[133].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[133].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[133].transfer += ops_compute_transfer(dim, range, &arg2);
+  OPS_kernels[49].mpi_time += t2-t1;
+  OPS_kernels[49].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[49].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[49].transfer += ops_compute_transfer(dim, range, &arg2);
 }

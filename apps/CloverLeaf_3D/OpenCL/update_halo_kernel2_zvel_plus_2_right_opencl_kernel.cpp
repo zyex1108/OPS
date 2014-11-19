@@ -83,7 +83,7 @@ void buildOpenCLKernels_update_halo_kernel2_zvel_plus_2_right(int xdim0, int ydi
       printf("compiling update_halo_kernel2_zvel_plus_2_right -- done\n");
 
     // Create the OpenCL kernel
-    OPS_opencl_core.kernel[84] = clCreateKernel(OPS_opencl_core.program, "ops_update_halo_kernel2_zvel_plus_2_right", &ret);
+    OPS_opencl_core.kernel[100] = clCreateKernel(OPS_opencl_core.program, "ops_update_halo_kernel2_zvel_plus_2_right", &ret);
     clSafeCall( ret );
 
     isbuilt_update_halo_kernel2_zvel_plus_2_right = true;
@@ -98,8 +98,12 @@ void ops_par_loop_update_halo_kernel2_zvel_plus_2_right(char const *name, ops_bl
   ops_arg args[3] = { arg0, arg1, arg2};
 
 
-  ops_timing_realloc(84,"update_halo_kernel2_zvel_plus_2_right");
-  OPS_kernels[84].count++;
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_before(args,3,range,100)) return;
+  #endif
+
+  ops_timing_realloc(100,"update_halo_kernel2_zvel_plus_2_right");
+  OPS_kernels[100].count++;
 
   //compute locally allocated range for the sub-block
   int start[3];
@@ -136,9 +140,9 @@ void ops_par_loop_update_halo_kernel2_zvel_plus_2_right(char const *name, ops_bl
   int z_size = MAX(0,end[2]-start[2]);
 
 
-  int xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  int xdim0 = args[0].dat->size[0];
   int ydim0 = args[0].dat->size[1];
-  int xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  int xdim1 = args[1].dat->size[0];
   int ydim1 = args[1].dat->size[1];
 
   //build opencl kernel if not already built
@@ -179,11 +183,11 @@ void ops_par_loop_update_halo_kernel2_zvel_plus_2_right(char const *name, ops_bl
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d];
   #endif //OPS_MPI
-  int base0 = 1 * 
+  int base0 = 1 *1* 
   (start[0] * args[0].stencil->stride[0] - args[0].dat->base[0] - d_m[0]);
-  base0 = base0 + args[0].dat->size[0] *
+  base0 = base0 + args[0].dat->size[0] *1*
   (start[1] * args[0].stencil->stride[1] - args[0].dat->base[1] - d_m[1]);
-  base0 = base0 + args[0].dat->size[0] *  args[0].dat->size[1] *
+  base0 = base0 + args[0].dat->size[0] *1*  args[0].dat->size[1] *1*
   (start[2] * args[0].stencil->stride[2] - args[0].dat->base[2] - d_m[2]);
 
   #ifdef OPS_MPI
@@ -191,11 +195,11 @@ void ops_par_loop_update_halo_kernel2_zvel_plus_2_right(char const *name, ops_bl
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[1].dat->d_m[d];
   #endif //OPS_MPI
-  int base1 = 1 * 
+  int base1 = 1 *1* 
   (start[0] * args[1].stencil->stride[0] - args[1].dat->base[0] - d_m[0]);
-  base1 = base1 + args[1].dat->size[0] *
+  base1 = base1 + args[1].dat->size[0] *1*
   (start[1] * args[1].stencil->stride[1] - args[1].dat->base[1] - d_m[1]);
-  base1 = base1 + args[1].dat->size[0] *  args[1].dat->size[1] *
+  base1 = base1 + args[1].dat->size[0] *1*  args[1].dat->size[1] *1*
   (start[2] * args[1].stencil->stride[2] - args[1].dat->base[2] - d_m[2]);
 
 
@@ -204,20 +208,20 @@ void ops_par_loop_update_halo_kernel2_zvel_plus_2_right(char const *name, ops_bl
   ops_H_D_exchanges_device(args, 3);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[84].mpi_time += t1-t2;
+  OPS_kernels[100].mpi_time += t1-t2;
 
 
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[84], 0, sizeof(cl_mem), (void*) &arg0.data_d ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[84], 1, sizeof(cl_mem), (void*) &arg1.data_d ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[84], 2, sizeof(cl_mem), (void*) &arg2.data_d ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[84], 3, sizeof(cl_int), (void*) &base0 ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[84], 4, sizeof(cl_int), (void*) &base1 ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[84], 5, sizeof(cl_int), (void*) &x_size ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[84], 6, sizeof(cl_int), (void*) &y_size ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[84], 7, sizeof(cl_int), (void*) &z_size ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[100], 0, sizeof(cl_mem), (void*) &arg0.data_d ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[100], 1, sizeof(cl_mem), (void*) &arg1.data_d ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[100], 2, sizeof(cl_mem), (void*) &arg2.data_d ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[100], 3, sizeof(cl_int), (void*) &base0 ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[100], 4, sizeof(cl_int), (void*) &base1 ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[100], 5, sizeof(cl_int), (void*) &x_size ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[100], 6, sizeof(cl_int), (void*) &y_size ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[100], 7, sizeof(cl_int), (void*) &z_size ));
 
   //call/enque opencl kernel wrapper function
-  clSafeCall( clEnqueueNDRangeKernel(OPS_opencl_core.command_queue, OPS_opencl_core.kernel[84], 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );
+  clSafeCall( clEnqueueNDRangeKernel(OPS_opencl_core.command_queue, OPS_opencl_core.kernel[100], 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );
   if (OPS_diags>1) {
     clSafeCall( clFinish(OPS_opencl_core.command_queue) );
   }
@@ -228,7 +232,7 @@ void ops_par_loop_update_halo_kernel2_zvel_plus_2_right(char const *name, ops_bl
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
-  OPS_kernels[84].time += t2-t1;
-  OPS_kernels[84].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[84].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[100].time += t2-t1;
+  OPS_kernels[100].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[100].transfer += ops_compute_transfer(dim, range, &arg1);
 }

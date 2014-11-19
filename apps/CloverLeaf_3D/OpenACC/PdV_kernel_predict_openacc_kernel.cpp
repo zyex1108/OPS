@@ -93,8 +93,12 @@ void ops_par_loop_PdV_kernel_predict(char const *name, ops_block Block, int dim,
   ops_arg args[14] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13};
 
 
-  ops_timing_realloc(5,"PdV_kernel_predict");
-  OPS_kernels[5].count++;
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_before(args,14,range,4)) return;
+  #endif
+
+  ops_timing_realloc(4,"PdV_kernel_predict");
+  OPS_kernels[4].count++;
 
   //compute localy allocated range for the sub-block
   int start[3];
@@ -131,33 +135,33 @@ void ops_par_loop_PdV_kernel_predict(char const *name, ops_block Block, int dim,
   int z_size = MAX(0,end[2]-start[2]);
 
 
-  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  xdim0 = args[0].dat->size[0];
   ydim0 = args[0].dat->size[1];
-  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  xdim1 = args[1].dat->size[0];
   ydim1 = args[1].dat->size[1];
-  xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+  xdim2 = args[2].dat->size[0];
   ydim2 = args[2].dat->size[1];
-  xdim3 = args[3].dat->size[0]*args[3].dat->dim;
+  xdim3 = args[3].dat->size[0];
   ydim3 = args[3].dat->size[1];
-  xdim4 = args[4].dat->size[0]*args[4].dat->dim;
+  xdim4 = args[4].dat->size[0];
   ydim4 = args[4].dat->size[1];
-  xdim5 = args[5].dat->size[0]*args[5].dat->dim;
+  xdim5 = args[5].dat->size[0];
   ydim5 = args[5].dat->size[1];
-  xdim6 = args[6].dat->size[0]*args[6].dat->dim;
+  xdim6 = args[6].dat->size[0];
   ydim6 = args[6].dat->size[1];
-  xdim7 = args[7].dat->size[0]*args[7].dat->dim;
+  xdim7 = args[7].dat->size[0];
   ydim7 = args[7].dat->size[1];
-  xdim8 = args[8].dat->size[0]*args[8].dat->dim;
+  xdim8 = args[8].dat->size[0];
   ydim8 = args[8].dat->size[1];
-  xdim9 = args[9].dat->size[0]*args[9].dat->dim;
+  xdim9 = args[9].dat->size[0];
   ydim9 = args[9].dat->size[1];
-  xdim10 = args[10].dat->size[0]*args[10].dat->dim;
+  xdim10 = args[10].dat->size[0];
   ydim10 = args[10].dat->size[1];
-  xdim11 = args[11].dat->size[0]*args[11].dat->dim;
+  xdim11 = args[11].dat->size[0];
   ydim11 = args[11].dat->size[1];
-  xdim12 = args[12].dat->size[0]*args[12].dat->dim;
+  xdim12 = args[12].dat->size[0];
   ydim12 = args[12].dat->size[1];
-  xdim13 = args[13].dat->size[0]*args[13].dat->dim;
+  xdim13 = args[13].dat->size[0];
   ydim13 = args[13].dat->size[1];
 
   //Timing
@@ -530,7 +534,7 @@ void ops_par_loop_PdV_kernel_predict(char const *name, ops_block Block, int dim,
   ops_halo_exchanges(args,14,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[5].mpi_time += t1-t2;
+  OPS_kernels[4].mpi_time += t1-t2;
 
   PdV_kernel_predict_c_wrapper(
     p_a0,
@@ -550,7 +554,7 @@ void ops_par_loop_PdV_kernel_predict(char const *name, ops_block Block, int dim,
     x_size, y_size, z_size);
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[5].time += t2-t1;
+  OPS_kernels[4].time += t2-t1;
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 14);
   #else
@@ -561,18 +565,18 @@ void ops_par_loop_PdV_kernel_predict(char const *name, ops_block Block, int dim,
   ops_set_halo_dirtybit3(&args[11],range);
 
   //Update kernel record
-  OPS_kernels[5].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[5].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[5].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[5].transfer += ops_compute_transfer(dim, range, &arg3);
-  OPS_kernels[5].transfer += ops_compute_transfer(dim, range, &arg4);
-  OPS_kernels[5].transfer += ops_compute_transfer(dim, range, &arg5);
-  OPS_kernels[5].transfer += ops_compute_transfer(dim, range, &arg6);
-  OPS_kernels[5].transfer += ops_compute_transfer(dim, range, &arg7);
-  OPS_kernels[5].transfer += ops_compute_transfer(dim, range, &arg8);
-  OPS_kernels[5].transfer += ops_compute_transfer(dim, range, &arg9);
-  OPS_kernels[5].transfer += ops_compute_transfer(dim, range, &arg10);
-  OPS_kernels[5].transfer += ops_compute_transfer(dim, range, &arg11);
-  OPS_kernels[5].transfer += ops_compute_transfer(dim, range, &arg12);
-  OPS_kernels[5].transfer += ops_compute_transfer(dim, range, &arg13);
+  OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg2);
+  OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg3);
+  OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg4);
+  OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg5);
+  OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg6);
+  OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg7);
+  OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg8);
+  OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg9);
+  OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg10);
+  OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg11);
+  OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg12);
+  OPS_kernels[4].transfer += ops_compute_transfer(dim, range, &arg13);
 }

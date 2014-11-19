@@ -56,10 +56,10 @@ int size2 ){
   int idx_y = blockDim.y * blockIdx.y + threadIdx.y;
   int idx_x = blockDim.x * blockIdx.x + threadIdx.x;
 
-  arg0 += idx_x * 1 + idx_y * 1 * xdim0_advec_cell_kernel2_xdir + idx_z * 1 * xdim0_advec_cell_kernel2_xdir * ydim0_advec_cell_kernel2_xdir;
-  arg1 += idx_x * 1 + idx_y * 1 * xdim1_advec_cell_kernel2_xdir + idx_z * 1 * xdim1_advec_cell_kernel2_xdir * ydim1_advec_cell_kernel2_xdir;
-  arg2 += idx_x * 1 + idx_y * 1 * xdim2_advec_cell_kernel2_xdir + idx_z * 1 * xdim2_advec_cell_kernel2_xdir * ydim2_advec_cell_kernel2_xdir;
-  arg3 += idx_x * 1 + idx_y * 1 * xdim3_advec_cell_kernel2_xdir + idx_z * 1 * xdim3_advec_cell_kernel2_xdir * ydim3_advec_cell_kernel2_xdir;
+  arg0 += idx_x * 1*1 + idx_y * 1*1 * xdim0_advec_cell_kernel2_xdir + idx_z * 1*1 * xdim0_advec_cell_kernel2_xdir * ydim0_advec_cell_kernel2_xdir;
+  arg1 += idx_x * 1*1 + idx_y * 1*1 * xdim1_advec_cell_kernel2_xdir + idx_z * 1*1 * xdim1_advec_cell_kernel2_xdir * ydim1_advec_cell_kernel2_xdir;
+  arg2 += idx_x * 1*1 + idx_y * 1*1 * xdim2_advec_cell_kernel2_xdir + idx_z * 1*1 * xdim2_advec_cell_kernel2_xdir * ydim2_advec_cell_kernel2_xdir;
+  arg3 += idx_x * 1*1 + idx_y * 1*1 * xdim3_advec_cell_kernel2_xdir + idx_z * 1*1 * xdim3_advec_cell_kernel2_xdir * ydim3_advec_cell_kernel2_xdir;
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
     advec_cell_kernel2_xdir(arg0, arg1, arg2, arg3);
@@ -74,8 +74,12 @@ void ops_par_loop_advec_cell_kernel2_xdir(char const *name, ops_block block, int
   ops_arg args[4] = { arg0, arg1, arg2, arg3};
 
 
-  ops_timing_realloc(30,"advec_cell_kernel2_xdir");
-  OPS_kernels[30].count++;
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_before(args,4,range,8)) return;
+  #endif
+
+  ops_timing_realloc(8,"advec_cell_kernel2_xdir");
+  OPS_kernels[8].count++;
 
   //compute locally allocated range for the sub-block
   int start[3];
@@ -111,13 +115,13 @@ void ops_par_loop_advec_cell_kernel2_xdir(char const *name, ops_block block, int
   int y_size = MAX(0,end[1]-start[1]);
   int z_size = MAX(0,end[2]-start[2]);
 
-  int xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  int xdim0 = args[0].dat->size[0];
   int ydim0 = args[0].dat->size[1];
-  int xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  int xdim1 = args[1].dat->size[0];
   int ydim1 = args[1].dat->size[1];
-  int xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+  int xdim2 = args[2].dat->size[0];
   int ydim2 = args[2].dat->size[1];
-  int xdim3 = args[3].dat->size[0]*args[3].dat->dim;
+  int xdim3 = args[3].dat->size[0];
   int ydim3 = args[3].dat->size[1];
 
 
@@ -229,7 +233,7 @@ void ops_par_loop_advec_cell_kernel2_xdir(char const *name, ops_block block, int
   ops_halo_exchanges(args,4,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[30].mpi_time += t1-t2;
+  OPS_kernels[8].mpi_time += t1-t2;
 
 
   //call kernel wrapper function, passing in pointers to data
@@ -240,14 +244,14 @@ void ops_par_loop_advec_cell_kernel2_xdir(char const *name, ops_block block, int
     cutilSafeCall(cudaDeviceSynchronize());
   }
   ops_timers_core(&c2,&t2);
-  OPS_kernels[30].time += t2-t1;
+  OPS_kernels[8].time += t2-t1;
   ops_set_dirtybit_device(args, 4);
   ops_set_halo_dirtybit3(&args[0],range);
   ops_set_halo_dirtybit3(&args[1],range);
 
   //Update kernel record
-  OPS_kernels[30].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[30].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[30].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[30].transfer += ops_compute_transfer(dim, range, &arg3);
+  OPS_kernels[8].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[8].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[8].transfer += ops_compute_transfer(dim, range, &arg2);
+  OPS_kernels[8].transfer += ops_compute_transfer(dim, range, &arg3);
 }

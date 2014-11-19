@@ -56,9 +56,9 @@ int size2 ){
   int idx_y = blockDim.y * blockIdx.y + threadIdx.y;
   int idx_x = blockDim.x * blockIdx.x + threadIdx.x;
 
-  arg0 += idx_x * 1 + idx_y * 0 * xdim0_calc_dt_kernel_get + idx_z * 0 * xdim0_calc_dt_kernel_get * ydim0_calc_dt_kernel_get;
-  arg1 += idx_x * 0 + idx_y * 1 * xdim1_calc_dt_kernel_get + idx_z * 0 * xdim1_calc_dt_kernel_get * ydim1_calc_dt_kernel_get;
-  arg4 += idx_x * 0 + idx_y * 0 * xdim4_calc_dt_kernel_get + idx_z * 1 * xdim4_calc_dt_kernel_get * ydim4_calc_dt_kernel_get;
+  arg0 += idx_x * 1*1 + idx_y * 0*1 * xdim0_calc_dt_kernel_get + idx_z * 0*1 * xdim0_calc_dt_kernel_get * ydim0_calc_dt_kernel_get;
+  arg1 += idx_x * 0*1 + idx_y * 1*1 * xdim1_calc_dt_kernel_get + idx_z * 0*1 * xdim1_calc_dt_kernel_get * ydim1_calc_dt_kernel_get;
+  arg4 += idx_x * 0*1 + idx_y * 0*1 * xdim4_calc_dt_kernel_get + idx_z * 1*1 * xdim4_calc_dt_kernel_get * ydim4_calc_dt_kernel_get;
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
     calc_dt_kernel_get(arg0, arg1, arg2_l, arg3_l,
@@ -81,8 +81,12 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
   ops_arg args[6] = { arg0, arg1, arg2, arg3, arg4, arg5};
 
 
-  ops_timing_realloc(128,"calc_dt_kernel_get");
-  OPS_kernels[128].count++;
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_before(args,6,range,39)) return;
+  #endif
+
+  ops_timing_realloc(39,"calc_dt_kernel_get");
+  OPS_kernels[39].count++;
 
   //compute locally allocated range for the sub-block
   int start[3];
@@ -118,11 +122,11 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
   int y_size = MAX(0,end[1]-start[1]);
   int z_size = MAX(0,end[2]-start[2]);
 
-  int xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  int xdim0 = args[0].dat->size[0];
   int ydim0 = args[0].dat->size[1];
-  int xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  int xdim1 = args[1].dat->size[0];
   int ydim1 = args[1].dat->size[1];
-  int xdim4 = args[4].dat->size[0]*args[4].dat->dim;
+  int xdim4 = args[4].dat->size[0];
   int ydim4 = args[4].dat->size[1];
 
 
@@ -261,7 +265,7 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
   ops_halo_exchanges(args,6,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[128].mpi_time += t1-t2;
+  OPS_kernels[39].mpi_time += t1-t2;
 
   int nshared = 0;
   int nthread = OPS_block_size_x*OPS_block_size_y;
@@ -303,11 +307,11 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
     cutilSafeCall(cudaDeviceSynchronize());
   }
   ops_timers_core(&c2,&t2);
-  OPS_kernels[128].time += t2-t1;
+  OPS_kernels[39].time += t2-t1;
   ops_set_dirtybit_device(args, 6);
 
   //Update kernel record
-  OPS_kernels[128].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[128].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[128].transfer += ops_compute_transfer(dim, range, &arg4);
+  OPS_kernels[39].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[39].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[39].transfer += ops_compute_transfer(dim, range, &arg4);
 }

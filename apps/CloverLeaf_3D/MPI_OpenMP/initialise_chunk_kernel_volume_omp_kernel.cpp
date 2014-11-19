@@ -39,8 +39,12 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block blo
 
 
 
-  ops_timing_realloc(139,"initialise_chunk_kernel_volume");
-  OPS_kernels[139].count++;
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_before(args,7,range,55)) return;
+  #endif
+
+  ops_timing_realloc(55,"initialise_chunk_kernel_volume");
+  OPS_kernels[55].count++;
 
   //compute locally allocated range for the sub-block
 
@@ -156,19 +160,19 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block blo
   #else
   int nthreads = 1;
   #endif
-  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  xdim0 = args[0].dat->size[0];
   ydim0 = args[0].dat->size[1];
-  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  xdim1 = args[1].dat->size[0];
   ydim1 = args[1].dat->size[1];
-  xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+  xdim2 = args[2].dat->size[0];
   ydim2 = args[2].dat->size[1];
-  xdim3 = args[3].dat->size[0]*args[3].dat->dim;
+  xdim3 = args[3].dat->size[0];
   ydim3 = args[3].dat->size[1];
-  xdim4 = args[4].dat->size[0]*args[4].dat->dim;
+  xdim4 = args[4].dat->size[0];
   ydim4 = args[4].dat->size[1];
-  xdim5 = args[5].dat->size[0]*args[5].dat->dim;
+  xdim5 = args[5].dat->size[0];
   ydim5 = args[5].dat->size[1];
-  xdim6 = args[6].dat->size[0]*args[6].dat->dim;
+  xdim6 = args[6].dat->size[0];
   ydim6 = args[6].dat->size[1];
 
   ops_H_D_exchanges_host(args, 7);
@@ -178,7 +182,7 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block blo
 
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[139].mpi_time += t2-t1;
+  OPS_kernels[55].mpi_time += t2-t1;
 
 
   #pragma omp parallel for
@@ -316,8 +320,8 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block blo
           //call kernel function, passing in pointers to data -vectorised
           #pragma simd
           for ( int i=0; i<SIMD_VEC; i++ ){
-            initialise_chunk_kernel_volume(  (double * )p_a[0]+ i*1, (const double * )p_a[1]+ i*0, (double * )p_a[2]+ i*1,
-           (const double * )p_a[3]+ i*1, (double * )p_a[4]+ i*1, (const double * )p_a[5]+ i*0, (double * )p_a[6]+ i*1 );
+            initialise_chunk_kernel_volume(  (double * )p_a[0]+ i*1*1, (const double * )p_a[1]+ i*0*1, (double * )p_a[2]+ i*1*1,
+           (const double * )p_a[3]+ i*1*1, (double * )p_a[4]+ i*1*1, (const double * )p_a[5]+ i*0*1, (double * )p_a[6]+ i*1*1 );
 
           }
 
@@ -368,7 +372,7 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block blo
   }
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[139].time += t1-t2;
+  OPS_kernels[55].time += t1-t2;
 
   ops_set_dirtybit_host(args, 7);
 
@@ -379,12 +383,12 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block blo
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
-  OPS_kernels[139].mpi_time += t2-t1;
-  OPS_kernels[139].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[139].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[139].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[139].transfer += ops_compute_transfer(dim, range, &arg3);
-  OPS_kernels[139].transfer += ops_compute_transfer(dim, range, &arg4);
-  OPS_kernels[139].transfer += ops_compute_transfer(dim, range, &arg5);
-  OPS_kernels[139].transfer += ops_compute_transfer(dim, range, &arg6);
+  OPS_kernels[55].mpi_time += t2-t1;
+  OPS_kernels[55].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[55].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[55].transfer += ops_compute_transfer(dim, range, &arg2);
+  OPS_kernels[55].transfer += ops_compute_transfer(dim, range, &arg3);
+  OPS_kernels[55].transfer += ops_compute_transfer(dim, range, &arg4);
+  OPS_kernels[55].transfer += ops_compute_transfer(dim, range, &arg5);
+  OPS_kernels[55].transfer += ops_compute_transfer(dim, range, &arg6);
 }

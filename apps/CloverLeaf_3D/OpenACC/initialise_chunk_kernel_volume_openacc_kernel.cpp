@@ -58,8 +58,12 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block Blo
   ops_arg args[7] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6};
 
 
-  ops_timing_realloc(139,"initialise_chunk_kernel_volume");
-  OPS_kernels[139].count++;
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_before(args,7,range,55)) return;
+  #endif
+
+  ops_timing_realloc(55,"initialise_chunk_kernel_volume");
+  OPS_kernels[55].count++;
 
   //compute localy allocated range for the sub-block
   int start[3];
@@ -96,19 +100,19 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block Blo
   int z_size = MAX(0,end[2]-start[2]);
 
 
-  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  xdim0 = args[0].dat->size[0];
   ydim0 = args[0].dat->size[1];
-  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  xdim1 = args[1].dat->size[0];
   ydim1 = args[1].dat->size[1];
-  xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+  xdim2 = args[2].dat->size[0];
   ydim2 = args[2].dat->size[1];
-  xdim3 = args[3].dat->size[0]*args[3].dat->dim;
+  xdim3 = args[3].dat->size[0];
   ydim3 = args[3].dat->size[1];
-  xdim4 = args[4].dat->size[0]*args[4].dat->dim;
+  xdim4 = args[4].dat->size[0];
   ydim4 = args[4].dat->size[1];
-  xdim5 = args[5].dat->size[0]*args[5].dat->dim;
+  xdim5 = args[5].dat->size[0];
   ydim5 = args[5].dat->size[1];
-  xdim6 = args[6].dat->size[0]*args[6].dat->dim;
+  xdim6 = args[6].dat->size[0];
   ydim6 = args[6].dat->size[1];
 
   //Timing
@@ -306,7 +310,7 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block Blo
   ops_halo_exchanges(args,7,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[139].mpi_time += t1-t2;
+  OPS_kernels[55].mpi_time += t1-t2;
 
   initialise_chunk_kernel_volume_c_wrapper(
     p_a0,
@@ -319,7 +323,7 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block Blo
     x_size, y_size, z_size);
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[139].time += t2-t1;
+  OPS_kernels[55].time += t2-t1;
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 7);
   #else
@@ -331,11 +335,11 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block Blo
   ops_set_halo_dirtybit3(&args[6],range);
 
   //Update kernel record
-  OPS_kernels[139].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[139].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[139].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[139].transfer += ops_compute_transfer(dim, range, &arg3);
-  OPS_kernels[139].transfer += ops_compute_transfer(dim, range, &arg4);
-  OPS_kernels[139].transfer += ops_compute_transfer(dim, range, &arg5);
-  OPS_kernels[139].transfer += ops_compute_transfer(dim, range, &arg6);
+  OPS_kernels[55].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[55].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[55].transfer += ops_compute_transfer(dim, range, &arg2);
+  OPS_kernels[55].transfer += ops_compute_transfer(dim, range, &arg3);
+  OPS_kernels[55].transfer += ops_compute_transfer(dim, range, &arg4);
+  OPS_kernels[55].transfer += ops_compute_transfer(dim, range, &arg5);
+  OPS_kernels[55].transfer += ops_compute_transfer(dim, range, &arg6);
 }

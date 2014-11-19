@@ -27,8 +27,12 @@ void ops_par_loop_initialise_chunk_kernel_xx(char const *name, ops_block block, 
 
 
 
-  ops_timing_realloc(130,"initialise_chunk_kernel_xx");
-  OPS_kernels[130].count++;
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_before(args,2,range,46)) return;
+  #endif
+
+  ops_timing_realloc(46,"initialise_chunk_kernel_xx");
+  OPS_kernels[46].count++;
 
   //compute locally allocated range for the sub-block
 
@@ -84,7 +88,7 @@ void ops_par_loop_initialise_chunk_kernel_xx(char const *name, ops_block block, 
   #else
   int nthreads = 1;
   #endif
-  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  xdim0 = args[0].dat->size[0];
   ydim0 = args[0].dat->size[1];
 
   ops_H_D_exchanges_host(args, 2);
@@ -94,7 +98,7 @@ void ops_par_loop_initialise_chunk_kernel_xx(char const *name, ops_block block, 
 
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[130].mpi_time += t2-t1;
+  OPS_kernels[46].mpi_time += t2-t1;
 
 
   #pragma omp parallel for
@@ -147,7 +151,7 @@ void ops_par_loop_initialise_chunk_kernel_xx(char const *name, ops_block block, 
         for ( int n_x=start[0]; n_x<start[0]+(end[0]-start[0])/SIMD_VEC; n_x++ ){
           //call kernel function, passing in pointers to data -vectorised
           for ( int i=0; i<SIMD_VEC; i++ ){
-            initialise_chunk_kernel_xx(  (int * )p_a[0]+ i*1, arg_idx );
+            initialise_chunk_kernel_xx(  (int * )p_a[0]+ i*1*1, arg_idx );
 
             arg_idx[0]++;
           }
@@ -189,7 +193,7 @@ void ops_par_loop_initialise_chunk_kernel_xx(char const *name, ops_block block, 
   }
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[130].time += t1-t2;
+  OPS_kernels[46].time += t1-t2;
 
   ops_set_dirtybit_host(args, 2);
 
@@ -197,6 +201,6 @@ void ops_par_loop_initialise_chunk_kernel_xx(char const *name, ops_block block, 
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
-  OPS_kernels[130].mpi_time += t2-t1;
-  OPS_kernels[130].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[46].mpi_time += t2-t1;
+  OPS_kernels[46].transfer += ops_compute_transfer(dim, range, &arg0);
 }

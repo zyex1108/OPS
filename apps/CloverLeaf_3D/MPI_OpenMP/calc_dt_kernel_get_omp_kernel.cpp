@@ -30,8 +30,12 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
 
 
 
-  ops_timing_realloc(128,"calc_dt_kernel_get");
-  OPS_kernels[128].count++;
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_before(args,6,range,39)) return;
+  #endif
+
+  ops_timing_realloc(39,"calc_dt_kernel_get");
+  OPS_kernels[39].count++;
 
   //compute locally allocated range for the sub-block
 
@@ -138,11 +142,11 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
       arg_gbl5[d+64*thr] = ZERO_double;
     }
   }
-  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  xdim0 = args[0].dat->size[0];
   ydim0 = args[0].dat->size[1];
-  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  xdim1 = args[1].dat->size[0];
   ydim1 = args[1].dat->size[1];
-  xdim4 = args[4].dat->size[0]*args[4].dat->dim;
+  xdim4 = args[4].dat->size[0];
   ydim4 = args[4].dat->size[1];
 
   ops_H_D_exchanges_host(args, 6);
@@ -152,7 +156,7 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
 
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[128].mpi_time += t2-t1;
+  OPS_kernels[39].mpi_time += t2-t1;
 
 
   #pragma omp parallel for
@@ -231,8 +235,8 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
         for ( int n_x=start[0]; n_x<start[0]+(end[0]-start[0])/SIMD_VEC; n_x++ ){
           //call kernel function, passing in pointers to data -vectorised
           for ( int i=0; i<SIMD_VEC; i++ ){
-            calc_dt_kernel_get(  (const double * )p_a[0]+ i*1, (const double * )p_a[1]+ i*0, &arg_gbl2[64*thr],
-           &arg_gbl3[64*thr], (const double * )p_a[4]+ i*0, &arg_gbl5[64*thr] );
+            calc_dt_kernel_get(  (const double * )p_a[0]+ i*1*1, (const double * )p_a[1]+ i*0*1, &arg_gbl2[64*thr],
+           &arg_gbl3[64*thr], (const double * )p_a[4]+ i*0*1, &arg_gbl5[64*thr] );
 
           }
 
@@ -267,7 +271,7 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
   }
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[128].time += t1-t2;
+  OPS_kernels[39].time += t1-t2;
 
 
   // combine reduction data
@@ -287,8 +291,8 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
-  OPS_kernels[128].mpi_time += t2-t1;
-  OPS_kernels[128].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[128].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[128].transfer += ops_compute_transfer(dim, range, &arg4);
+  OPS_kernels[39].mpi_time += t2-t1;
+  OPS_kernels[39].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[39].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[39].transfer += ops_compute_transfer(dim, range, &arg4);
 }

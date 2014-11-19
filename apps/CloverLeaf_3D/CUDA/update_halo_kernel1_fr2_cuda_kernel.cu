@@ -84,13 +84,13 @@ int size2 ){
   int idx_y = blockDim.y * blockIdx.y + threadIdx.y;
   int idx_x = blockDim.x * blockIdx.x + threadIdx.x;
 
-  arg0 += idx_x * 1 + idx_y * 1 * xdim0_update_halo_kernel1_fr2 + idx_z * 1 * xdim0_update_halo_kernel1_fr2 * ydim0_update_halo_kernel1_fr2;
-  arg1 += idx_x * 1 + idx_y * 1 * xdim1_update_halo_kernel1_fr2 + idx_z * 1 * xdim1_update_halo_kernel1_fr2 * ydim1_update_halo_kernel1_fr2;
-  arg2 += idx_x * 1 + idx_y * 1 * xdim2_update_halo_kernel1_fr2 + idx_z * 1 * xdim2_update_halo_kernel1_fr2 * ydim2_update_halo_kernel1_fr2;
-  arg3 += idx_x * 1 + idx_y * 1 * xdim3_update_halo_kernel1_fr2 + idx_z * 1 * xdim3_update_halo_kernel1_fr2 * ydim3_update_halo_kernel1_fr2;
-  arg4 += idx_x * 1 + idx_y * 1 * xdim4_update_halo_kernel1_fr2 + idx_z * 1 * xdim4_update_halo_kernel1_fr2 * ydim4_update_halo_kernel1_fr2;
-  arg5 += idx_x * 1 + idx_y * 1 * xdim5_update_halo_kernel1_fr2 + idx_z * 1 * xdim5_update_halo_kernel1_fr2 * ydim5_update_halo_kernel1_fr2;
-  arg6 += idx_x * 1 + idx_y * 1 * xdim6_update_halo_kernel1_fr2 + idx_z * 1 * xdim6_update_halo_kernel1_fr2 * ydim6_update_halo_kernel1_fr2;
+  arg0 += idx_x * 1*1 + idx_y * 1*1 * xdim0_update_halo_kernel1_fr2 + idx_z * 1*1 * xdim0_update_halo_kernel1_fr2 * ydim0_update_halo_kernel1_fr2;
+  arg1 += idx_x * 1*1 + idx_y * 1*1 * xdim1_update_halo_kernel1_fr2 + idx_z * 1*1 * xdim1_update_halo_kernel1_fr2 * ydim1_update_halo_kernel1_fr2;
+  arg2 += idx_x * 1*1 + idx_y * 1*1 * xdim2_update_halo_kernel1_fr2 + idx_z * 1*1 * xdim2_update_halo_kernel1_fr2 * ydim2_update_halo_kernel1_fr2;
+  arg3 += idx_x * 1*1 + idx_y * 1*1 * xdim3_update_halo_kernel1_fr2 + idx_z * 1*1 * xdim3_update_halo_kernel1_fr2 * ydim3_update_halo_kernel1_fr2;
+  arg4 += idx_x * 1*1 + idx_y * 1*1 * xdim4_update_halo_kernel1_fr2 + idx_z * 1*1 * xdim4_update_halo_kernel1_fr2 * ydim4_update_halo_kernel1_fr2;
+  arg5 += idx_x * 1*1 + idx_y * 1*1 * xdim5_update_halo_kernel1_fr2 + idx_z * 1*1 * xdim5_update_halo_kernel1_fr2 * ydim5_update_halo_kernel1_fr2;
+  arg6 += idx_x * 1*1 + idx_y * 1*1 * xdim6_update_halo_kernel1_fr2 + idx_z * 1*1 * xdim6_update_halo_kernel1_fr2 * ydim6_update_halo_kernel1_fr2;
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
     update_halo_kernel1_fr2(arg0, arg1, arg2, arg3,
@@ -107,8 +107,12 @@ void ops_par_loop_update_halo_kernel1_fr2(char const *name, ops_block block, int
   ops_arg args[8] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7};
 
 
-  ops_timing_realloc(51,"update_halo_kernel1_fr2");
-  OPS_kernels[51].count++;
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_before(args,8,range,67)) return;
+  #endif
+
+  ops_timing_realloc(67,"update_halo_kernel1_fr2");
+  OPS_kernels[67].count++;
 
   //compute locally allocated range for the sub-block
   int start[3];
@@ -144,19 +148,19 @@ void ops_par_loop_update_halo_kernel1_fr2(char const *name, ops_block block, int
   int y_size = MAX(0,end[1]-start[1]);
   int z_size = MAX(0,end[2]-start[2]);
 
-  int xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  int xdim0 = args[0].dat->size[0];
   int ydim0 = args[0].dat->size[1];
-  int xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  int xdim1 = args[1].dat->size[0];
   int ydim1 = args[1].dat->size[1];
-  int xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+  int xdim2 = args[2].dat->size[0];
   int ydim2 = args[2].dat->size[1];
-  int xdim3 = args[3].dat->size[0]*args[3].dat->dim;
+  int xdim3 = args[3].dat->size[0];
   int ydim3 = args[3].dat->size[1];
-  int xdim4 = args[4].dat->size[0]*args[4].dat->dim;
+  int xdim4 = args[4].dat->size[0];
   int ydim4 = args[4].dat->size[1];
-  int xdim5 = args[5].dat->size[0]*args[5].dat->dim;
+  int xdim5 = args[5].dat->size[0];
   int ydim5 = args[5].dat->size[1];
-  int xdim6 = args[6].dat->size[0]*args[6].dat->dim;
+  int xdim6 = args[6].dat->size[0];
   int ydim6 = args[6].dat->size[1];
 
 
@@ -342,7 +346,7 @@ void ops_par_loop_update_halo_kernel1_fr2(char const *name, ops_block block, int
   ops_halo_exchanges(args,8,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[51].mpi_time += t1-t2;
+  OPS_kernels[67].mpi_time += t1-t2;
 
 
   //call kernel wrapper function, passing in pointers to data
@@ -355,7 +359,7 @@ void ops_par_loop_update_halo_kernel1_fr2(char const *name, ops_block block, int
     cutilSafeCall(cudaDeviceSynchronize());
   }
   ops_timers_core(&c2,&t2);
-  OPS_kernels[51].time += t2-t1;
+  OPS_kernels[67].time += t2-t1;
   ops_set_dirtybit_device(args, 8);
   ops_set_halo_dirtybit3(&args[0],range);
   ops_set_halo_dirtybit3(&args[1],range);
@@ -366,11 +370,11 @@ void ops_par_loop_update_halo_kernel1_fr2(char const *name, ops_block block, int
   ops_set_halo_dirtybit3(&args[6],range);
 
   //Update kernel record
-  OPS_kernels[51].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[51].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[51].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[51].transfer += ops_compute_transfer(dim, range, &arg3);
-  OPS_kernels[51].transfer += ops_compute_transfer(dim, range, &arg4);
-  OPS_kernels[51].transfer += ops_compute_transfer(dim, range, &arg5);
-  OPS_kernels[51].transfer += ops_compute_transfer(dim, range, &arg6);
+  OPS_kernels[67].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[67].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[67].transfer += ops_compute_transfer(dim, range, &arg2);
+  OPS_kernels[67].transfer += ops_compute_transfer(dim, range, &arg3);
+  OPS_kernels[67].transfer += ops_compute_transfer(dim, range, &arg4);
+  OPS_kernels[67].transfer += ops_compute_transfer(dim, range, &arg5);
+  OPS_kernels[67].transfer += ops_compute_transfer(dim, range, &arg6);
 }

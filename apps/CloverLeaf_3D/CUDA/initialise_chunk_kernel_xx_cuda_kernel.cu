@@ -36,7 +36,7 @@ int size2 ){
   arg_idx[0] = arg_idx0+idx_x;
   arg_idx[1] = arg_idx1+idx_y;
   arg_idx[2] = arg_idx2+idx_z;
-  arg0 += idx_x * 1 + idx_y * 0 * xdim0_initialise_chunk_kernel_xx + idx_z * 0 * xdim0_initialise_chunk_kernel_xx * ydim0_initialise_chunk_kernel_xx;
+  arg0 += idx_x * 1*1 + idx_y * 0*1 * xdim0_initialise_chunk_kernel_xx + idx_z * 0*1 * xdim0_initialise_chunk_kernel_xx * ydim0_initialise_chunk_kernel_xx;
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
     initialise_chunk_kernel_xx(arg0, arg_idx);
@@ -51,8 +51,12 @@ void ops_par_loop_initialise_chunk_kernel_xx(char const *name, ops_block block, 
   ops_arg args[2] = { arg0, arg1};
 
 
-  ops_timing_realloc(130,"initialise_chunk_kernel_xx");
-  OPS_kernels[130].count++;
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_before(args,2,range,46)) return;
+  #endif
+
+  ops_timing_realloc(46,"initialise_chunk_kernel_xx");
+  OPS_kernels[46].count++;
 
   //compute locally allocated range for the sub-block
   int start[3];
@@ -98,7 +102,7 @@ void ops_par_loop_initialise_chunk_kernel_xx(char const *name, ops_block block, 
   arg_idx[1] = start[1];
   arg_idx[2] = start[2];
   #endif //OPS_MPI
-  int xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  int xdim0 = args[0].dat->size[0];
   int ydim0 = args[0].dat->size[1];
 
 
@@ -147,7 +151,7 @@ void ops_par_loop_initialise_chunk_kernel_xx(char const *name, ops_block block, 
   ops_halo_exchanges(args,2,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[130].mpi_time += t1-t2;
+  OPS_kernels[46].mpi_time += t1-t2;
 
 
   //call kernel wrapper function, passing in pointers to data
@@ -157,10 +161,10 @@ void ops_par_loop_initialise_chunk_kernel_xx(char const *name, ops_block block, 
     cutilSafeCall(cudaDeviceSynchronize());
   }
   ops_timers_core(&c2,&t2);
-  OPS_kernels[130].time += t2-t1;
+  OPS_kernels[46].time += t2-t1;
   ops_set_dirtybit_device(args, 2);
   ops_set_halo_dirtybit3(&args[0],range);
 
   //Update kernel record
-  OPS_kernels[130].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[46].transfer += ops_compute_transfer(dim, range, &arg0);
 }

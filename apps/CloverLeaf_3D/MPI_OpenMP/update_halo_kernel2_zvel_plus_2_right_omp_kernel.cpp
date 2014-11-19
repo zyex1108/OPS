@@ -29,8 +29,12 @@ void ops_par_loop_update_halo_kernel2_zvel_plus_2_right(char const *name, ops_bl
 
 
 
-  ops_timing_realloc(84,"update_halo_kernel2_zvel_plus_2_right");
-  OPS_kernels[84].count++;
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_before(args,3,range,100)) return;
+  #endif
+
+  ops_timing_realloc(100,"update_halo_kernel2_zvel_plus_2_right");
+  OPS_kernels[100].count++;
 
   //compute locally allocated range for the sub-block
 
@@ -96,9 +100,9 @@ void ops_par_loop_update_halo_kernel2_zvel_plus_2_right(char const *name, ops_bl
   #else
   int nthreads = 1;
   #endif
-  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  xdim0 = args[0].dat->size[0];
   ydim0 = args[0].dat->size[1];
-  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  xdim1 = args[1].dat->size[0];
   ydim1 = args[1].dat->size[1];
 
   ops_H_D_exchanges_host(args, 3);
@@ -108,7 +112,7 @@ void ops_par_loop_update_halo_kernel2_zvel_plus_2_right(char const *name, ops_bl
 
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[84].mpi_time += t2-t1;
+  OPS_kernels[100].mpi_time += t2-t1;
 
 
   #pragma omp parallel for
@@ -168,7 +172,7 @@ void ops_par_loop_update_halo_kernel2_zvel_plus_2_right(char const *name, ops_bl
           //call kernel function, passing in pointers to data -vectorised
           #pragma simd
           for ( int i=0; i<SIMD_VEC; i++ ){
-            update_halo_kernel2_zvel_plus_2_right(  (double * )p_a[0]+ i*1, (double * )p_a[1]+ i*1, (int * )p_a[2] );
+            update_halo_kernel2_zvel_plus_2_right(  (double * )p_a[0]+ i*1*1, (double * )p_a[1]+ i*1*1, (int * )p_a[2] );
 
           }
 
@@ -198,7 +202,7 @@ void ops_par_loop_update_halo_kernel2_zvel_plus_2_right(char const *name, ops_bl
   }
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[84].time += t1-t2;
+  OPS_kernels[100].time += t1-t2;
 
   ops_set_dirtybit_host(args, 3);
 
@@ -207,7 +211,7 @@ void ops_par_loop_update_halo_kernel2_zvel_plus_2_right(char const *name, ops_bl
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
-  OPS_kernels[84].mpi_time += t2-t1;
-  OPS_kernels[84].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[84].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[100].mpi_time += t2-t1;
+  OPS_kernels[100].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[100].transfer += ops_compute_transfer(dim, range, &arg1);
 }

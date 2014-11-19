@@ -41,8 +41,8 @@ int size2 ){
   int idx_y = blockDim.y * blockIdx.y + threadIdx.y;
   int idx_x = blockDim.x * blockIdx.x + threadIdx.x;
 
-  arg0 += idx_x * 1 + idx_y * 1 * xdim0_update_halo_kernel2_zvel_plus_4_top + idx_z * 1 * xdim0_update_halo_kernel2_zvel_plus_4_top * ydim0_update_halo_kernel2_zvel_plus_4_top;
-  arg1 += idx_x * 1 + idx_y * 1 * xdim1_update_halo_kernel2_zvel_plus_4_top + idx_z * 1 * xdim1_update_halo_kernel2_zvel_plus_4_top * ydim1_update_halo_kernel2_zvel_plus_4_top;
+  arg0 += idx_x * 1*1 + idx_y * 1*1 * xdim0_update_halo_kernel2_zvel_plus_4_top + idx_z * 1*1 * xdim0_update_halo_kernel2_zvel_plus_4_top * ydim0_update_halo_kernel2_zvel_plus_4_top;
+  arg1 += idx_x * 1*1 + idx_y * 1*1 * xdim1_update_halo_kernel2_zvel_plus_4_top + idx_z * 1*1 * xdim1_update_halo_kernel2_zvel_plus_4_top * ydim1_update_halo_kernel2_zvel_plus_4_top;
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
     update_halo_kernel2_zvel_plus_4_top(arg0, arg1, arg2);
@@ -57,8 +57,12 @@ void ops_par_loop_update_halo_kernel2_zvel_plus_4_top(char const *name, ops_bloc
   ops_arg args[3] = { arg0, arg1, arg2};
 
 
-  ops_timing_realloc(79,"update_halo_kernel2_zvel_plus_4_top");
-  OPS_kernels[79].count++;
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_before(args,3,range,95)) return;
+  #endif
+
+  ops_timing_realloc(95,"update_halo_kernel2_zvel_plus_4_top");
+  OPS_kernels[95].count++;
 
   //compute locally allocated range for the sub-block
   int start[3];
@@ -94,9 +98,9 @@ void ops_par_loop_update_halo_kernel2_zvel_plus_4_top(char const *name, ops_bloc
   int y_size = MAX(0,end[1]-start[1]);
   int z_size = MAX(0,end[2]-start[2]);
 
-  int xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  int xdim0 = args[0].dat->size[0];
   int ydim0 = args[0].dat->size[1];
-  int xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  int xdim1 = args[1].dat->size[0];
   int ydim1 = args[1].dat->size[1];
 
 
@@ -177,7 +181,7 @@ void ops_par_loop_update_halo_kernel2_zvel_plus_4_top(char const *name, ops_bloc
   ops_halo_exchanges(args,3,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[79].mpi_time += t1-t2;
+  OPS_kernels[95].mpi_time += t1-t2;
 
 
   //call kernel wrapper function, passing in pointers to data
@@ -188,12 +192,12 @@ void ops_par_loop_update_halo_kernel2_zvel_plus_4_top(char const *name, ops_bloc
     cutilSafeCall(cudaDeviceSynchronize());
   }
   ops_timers_core(&c2,&t2);
-  OPS_kernels[79].time += t2-t1;
+  OPS_kernels[95].time += t2-t1;
   ops_set_dirtybit_device(args, 3);
   ops_set_halo_dirtybit3(&args[0],range);
   ops_set_halo_dirtybit3(&args[1],range);
 
   //Update kernel record
-  OPS_kernels[79].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[79].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[95].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[95].transfer += ops_compute_transfer(dim, range, &arg1);
 }

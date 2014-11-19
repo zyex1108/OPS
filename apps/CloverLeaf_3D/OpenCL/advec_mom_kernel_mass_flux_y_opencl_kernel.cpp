@@ -83,7 +83,7 @@ void buildOpenCLKernels_advec_mom_kernel_mass_flux_y(int xdim0, int ydim0, int x
       printf("compiling advec_mom_kernel_mass_flux_y -- done\n");
 
     // Create the OpenCL kernel
-    OPS_opencl_core.kernel[21] = clCreateKernel(OPS_opencl_core.program, "ops_advec_mom_kernel_mass_flux_y", &ret);
+    OPS_opencl_core.kernel[29] = clCreateKernel(OPS_opencl_core.program, "ops_advec_mom_kernel_mass_flux_y", &ret);
     clSafeCall( ret );
 
     isbuilt_advec_mom_kernel_mass_flux_y = true;
@@ -98,8 +98,12 @@ void ops_par_loop_advec_mom_kernel_mass_flux_y(char const *name, ops_block block
   ops_arg args[2] = { arg0, arg1};
 
 
-  ops_timing_realloc(21,"advec_mom_kernel_mass_flux_y");
-  OPS_kernels[21].count++;
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_before(args,2,range,29)) return;
+  #endif
+
+  ops_timing_realloc(29,"advec_mom_kernel_mass_flux_y");
+  OPS_kernels[29].count++;
 
   //compute locally allocated range for the sub-block
   int start[3];
@@ -136,9 +140,9 @@ void ops_par_loop_advec_mom_kernel_mass_flux_y(char const *name, ops_block block
   int z_size = MAX(0,end[2]-start[2]);
 
 
-  int xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  int xdim0 = args[0].dat->size[0];
   int ydim0 = args[0].dat->size[1];
-  int xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  int xdim1 = args[1].dat->size[0];
   int ydim1 = args[1].dat->size[1];
 
   //build opencl kernel if not already built
@@ -168,11 +172,11 @@ void ops_par_loop_advec_mom_kernel_mass_flux_y(char const *name, ops_block block
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d];
   #endif //OPS_MPI
-  int base0 = 1 * 
+  int base0 = 1 *1* 
   (start[0] * args[0].stencil->stride[0] - args[0].dat->base[0] - d_m[0]);
-  base0 = base0 + args[0].dat->size[0] *
+  base0 = base0 + args[0].dat->size[0] *1*
   (start[1] * args[0].stencil->stride[1] - args[0].dat->base[1] - d_m[1]);
-  base0 = base0 + args[0].dat->size[0] *  args[0].dat->size[1] *
+  base0 = base0 + args[0].dat->size[0] *1*  args[0].dat->size[1] *1*
   (start[2] * args[0].stencil->stride[2] - args[0].dat->base[2] - d_m[2]);
 
   #ifdef OPS_MPI
@@ -180,11 +184,11 @@ void ops_par_loop_advec_mom_kernel_mass_flux_y(char const *name, ops_block block
   #else //OPS_MPI
   for (int d = 0; d < dim; d++) d_m[d] = args[1].dat->d_m[d];
   #endif //OPS_MPI
-  int base1 = 1 * 
+  int base1 = 1 *1* 
   (start[0] * args[1].stencil->stride[0] - args[1].dat->base[0] - d_m[0]);
-  base1 = base1 + args[1].dat->size[0] *
+  base1 = base1 + args[1].dat->size[0] *1*
   (start[1] * args[1].stencil->stride[1] - args[1].dat->base[1] - d_m[1]);
-  base1 = base1 + args[1].dat->size[0] *  args[1].dat->size[1] *
+  base1 = base1 + args[1].dat->size[0] *1*  args[1].dat->size[1] *1*
   (start[2] * args[1].stencil->stride[2] - args[1].dat->base[2] - d_m[2]);
 
 
@@ -193,19 +197,19 @@ void ops_par_loop_advec_mom_kernel_mass_flux_y(char const *name, ops_block block
   ops_H_D_exchanges_device(args, 2);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[21].mpi_time += t1-t2;
+  OPS_kernels[29].mpi_time += t1-t2;
 
 
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[21], 0, sizeof(cl_mem), (void*) &arg0.data_d ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[21], 1, sizeof(cl_mem), (void*) &arg1.data_d ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[21], 2, sizeof(cl_int), (void*) &base0 ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[21], 3, sizeof(cl_int), (void*) &base1 ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[21], 4, sizeof(cl_int), (void*) &x_size ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[21], 5, sizeof(cl_int), (void*) &y_size ));
-  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[21], 6, sizeof(cl_int), (void*) &z_size ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[29], 0, sizeof(cl_mem), (void*) &arg0.data_d ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[29], 1, sizeof(cl_mem), (void*) &arg1.data_d ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[29], 2, sizeof(cl_int), (void*) &base0 ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[29], 3, sizeof(cl_int), (void*) &base1 ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[29], 4, sizeof(cl_int), (void*) &x_size ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[29], 5, sizeof(cl_int), (void*) &y_size ));
+  clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[29], 6, sizeof(cl_int), (void*) &z_size ));
 
   //call/enque opencl kernel wrapper function
-  clSafeCall( clEnqueueNDRangeKernel(OPS_opencl_core.command_queue, OPS_opencl_core.kernel[21], 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );
+  clSafeCall( clEnqueueNDRangeKernel(OPS_opencl_core.command_queue, OPS_opencl_core.kernel[29], 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );
   if (OPS_diags>1) {
     clSafeCall( clFinish(OPS_opencl_core.command_queue) );
   }
@@ -215,7 +219,7 @@ void ops_par_loop_advec_mom_kernel_mass_flux_y(char const *name, ops_block block
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
-  OPS_kernels[21].time += t2-t1;
-  OPS_kernels[21].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[21].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[29].time += t2-t1;
+  OPS_kernels[29].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[29].transfer += ops_compute_transfer(dim, range, &arg1);
 }

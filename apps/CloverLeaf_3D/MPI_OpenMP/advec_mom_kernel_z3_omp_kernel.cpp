@@ -32,8 +32,12 @@ void ops_par_loop_advec_mom_kernel_z3(char const *name, ops_block block, int dim
 
 
 
-  ops_timing_realloc(16,"advec_mom_kernel_z3");
-  OPS_kernels[16].count++;
+  #ifdef CHECKPOINTING
+  if (!ops_checkpointing_before(args,4,range,24)) return;
+  #endif
+
+  ops_timing_realloc(24,"advec_mom_kernel_z3");
+  OPS_kernels[24].count++;
 
   //compute locally allocated range for the sub-block
 
@@ -119,13 +123,13 @@ void ops_par_loop_advec_mom_kernel_z3(char const *name, ops_block block, int dim
   #else
   int nthreads = 1;
   #endif
-  xdim0 = args[0].dat->size[0]*args[0].dat->dim;
+  xdim0 = args[0].dat->size[0];
   ydim0 = args[0].dat->size[1];
-  xdim1 = args[1].dat->size[0]*args[1].dat->dim;
+  xdim1 = args[1].dat->size[0];
   ydim1 = args[1].dat->size[1];
-  xdim2 = args[2].dat->size[0]*args[2].dat->dim;
+  xdim2 = args[2].dat->size[0];
   ydim2 = args[2].dat->size[1];
-  xdim3 = args[3].dat->size[0]*args[3].dat->dim;
+  xdim3 = args[3].dat->size[0];
   ydim3 = args[3].dat->size[1];
 
   ops_H_D_exchanges_host(args, 4);
@@ -135,7 +139,7 @@ void ops_par_loop_advec_mom_kernel_z3(char const *name, ops_block block, int dim
 
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[16].mpi_time += t2-t1;
+  OPS_kernels[24].mpi_time += t2-t1;
 
 
   #pragma omp parallel for
@@ -225,8 +229,8 @@ void ops_par_loop_advec_mom_kernel_z3(char const *name, ops_block block, int dim
           //call kernel function, passing in pointers to data -vectorised
           #pragma simd
           for ( int i=0; i<SIMD_VEC; i++ ){
-            advec_mom_kernel_z3(  (double * )p_a[0]+ i*1, (double * )p_a[1]+ i*1, (const double * )p_a[2]+ i*1,
-           (const double * )p_a[3]+ i*1 );
+            advec_mom_kernel_z3(  (double * )p_a[0]+ i*1*1, (double * )p_a[1]+ i*1*1, (const double * )p_a[2]+ i*1*1,
+           (const double * )p_a[3]+ i*1*1 );
 
           }
 
@@ -265,7 +269,7 @@ void ops_par_loop_advec_mom_kernel_z3(char const *name, ops_block block, int dim
   }
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[16].time += t1-t2;
+  OPS_kernels[24].time += t1-t2;
 
   ops_set_dirtybit_host(args, 4);
 
@@ -274,9 +278,9 @@ void ops_par_loop_advec_mom_kernel_z3(char const *name, ops_block block, int dim
 
   //Update kernel record
   ops_timers_core(&c2,&t2);
-  OPS_kernels[16].mpi_time += t2-t1;
-  OPS_kernels[16].transfer += ops_compute_transfer(dim, range, &arg0);
-  OPS_kernels[16].transfer += ops_compute_transfer(dim, range, &arg1);
-  OPS_kernels[16].transfer += ops_compute_transfer(dim, range, &arg2);
-  OPS_kernels[16].transfer += ops_compute_transfer(dim, range, &arg3);
+  OPS_kernels[24].mpi_time += t2-t1;
+  OPS_kernels[24].transfer += ops_compute_transfer(dim, range, &arg0);
+  OPS_kernels[24].transfer += ops_compute_transfer(dim, range, &arg1);
+  OPS_kernels[24].transfer += ops_compute_transfer(dim, range, &arg2);
+  OPS_kernels[24].transfer += ops_compute_transfer(dim, range, &arg3);
 }
