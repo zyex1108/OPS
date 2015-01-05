@@ -83,12 +83,12 @@ endif
   MPIFLAGS  = $(CPPFLAGS)
 else
 ifeq ($(OPS_COMPILER),xl)
-  CPP       = mpixlc
+  CPP       = mpixlcxx
   CUDA_ALIGN_FLAG :=
 ifdef DEBUG
   CCFLAGS   = -O2 -g
 else
-  CCFLAGS   = -O5 -qnoeh -qipa=partition=large -g -qfullpath -Q -qlistopt -qattr=full -qlist -qreport -qxref=full -qsource -qsuppress=1506-224:1500-036 -qsrcmsg -qfloat=nomaf
+  CCFLAGS   = -O5 -qsimd=auto -qnoeh -qipa=partition=large -g -qfullpath -Q -qlistopt -qattr=full -qlist -qreport -qxref=full -qsource -qsuppress=1506-224:1500-036 -qsrcmsg -qfloat=nomaf
 endif
   CPPFLAGS  = $(CCFLAGS)
   OMPFLAGS  = -qsmp=omp  -qthreaded

@@ -371,7 +371,8 @@ def ops_gen_mpi(master, date, consts, kernels):
 
     comm('call kernel function, passing in pointers to data -vectorised')
     if reduction == 0 and arg_idx == 0:
-      code('#pragma simd')
+      code('#pragma simd_level(10)')
+      #code('#pragma simd')
     FOR('i','0','SIMD_VEC')
     text = name+'( '
     for n in range (0, nargs):
