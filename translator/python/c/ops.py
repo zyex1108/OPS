@@ -135,7 +135,7 @@ def get_arg_dat(arg_string, j):
 
     # check for syntax errors
     if not(len(dat_args_string.split(',')) == 5 or len(dat_args_string.split(',')) == 6 ):
-      print 'Error parsing op_arg_dat(%s): must have four or five arguments' % dat_args_string
+      print 'Error parsing op_arg_dat(%s): must have five or six arguments' % dat_args_string
       return
 
     if len(dat_args_string.split(',')) == 5:
@@ -667,10 +667,10 @@ def main():
 
 
   ops_gen_mpi(str(sys.argv[1]), date, consts, kernels)
-  ops_gen_mpi_openmp(str(sys.argv[1]), date, consts, kernels)
-  ops_gen_mpi_cuda(str(sys.argv[1]), date, consts, kernels)
-  ops_gen_mpi_openacc(str(sys.argv[1]), date, consts, kernels)
-  ops_gen_mpi_opencl(str(sys.argv[1]), date, consts, kernels)
+  #ops_gen_mpi_openmp(str(sys.argv[1]), date, consts, kernels)
+  #ops_gen_mpi_cuda(str(sys.argv[1]), date, consts, kernels)
+  #ops_gen_mpi_openacc(str(sys.argv[1]), date, consts, kernels)
+  #ops_gen_mpi_opencl(str(sys.argv[1]), date, consts, kernels)
 
 
 
