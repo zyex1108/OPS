@@ -43,6 +43,8 @@ void ops_par_loop_advec_mom_kernel2_z(char const *name, ops_block block, int dim
 
   #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
+  #endif
+  #ifdef OPS_MPI
   if (!sb->owned) return;
   for ( int n=0; n<3; n++ ){
     start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
@@ -67,6 +69,7 @@ void ops_par_loop_advec_mom_kernel2_z(char const *name, ops_block block, int dim
     start[n] = range[2*n];end[n] = range[2*n+1];
   }
   #endif //OPS_MPI
+
   #ifdef OPS_DEBUG
   ops_register_args(args, "advec_mom_kernel2_z");
   #endif
