@@ -72,6 +72,7 @@ void ops_par_loop_initialise_chunk_kernel_x(char const *name, ops_block block, i
     start[n] = range[2*n];end[n] = range[2*n+1];
   }
   #endif //OPS_MPI
+
   #ifdef OPS_DEBUG
   ops_register_args(args, "initialise_chunk_kernel_x");
   #endif

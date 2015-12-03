@@ -282,31 +282,60 @@ def ops_gen_mpi(master, date, consts, kernels):
     comm('compute locally allocated range for the sub-block')
     code('int start['+str(NDIM)+'];')
     code('int end['+str(NDIM)+'];')
-    if arg_idx == 1:
-      code('int arg_idx['+str(NDIM)+'];')
     code('')
 
-    code('#ifdef OPS_MPI')
-    code('if (compute_ranges(args, block, range, start, end, arg_idx) < 0) return;')
-    code('#else //OPS_MPI')
-    FOR('n','0',str(NDIM))
-    code('start[n] = range[2*n];end[n] = range[2*n+1];')
-    ENDFOR()
-    code('#endif //OPS_MPI')
-    code('')
+    if not(MULTI_GRID):
+      code('#ifdef OPS_MPI')
+      code('sub_block_list sb = OPS_sub_block_list[block->index];')
+      code('if (!sb->owned) return;')
+      FOR('n','0',str(NDIM))
+      code('start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];')
+      IF('start[n] >= range[2*n]')
+      code('start[n] = 0;')
+      ENDIF()
+      ELSE()
+      code('start[n] = range[2*n] - start[n];')
+      ENDIF()
+      code('if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];')
+      IF('end[n] >= range[2*n+1]')
+      code('end[n] = range[2*n+1] - sb->decomp_disp[n];')
+      ENDIF()
+      ELSE()
+      code('end[n] = sb->decomp_size[n];')
+      ENDIF()
+      code('if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))')
+      code('  end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);')
+      ENDFOR()
+      code('#else //OPS_MPI')
+      FOR('n','0',str(NDIM))
+      code('start[n] = range[2*n];end[n] = range[2*n+1];')
+      ENDFOR()
+      code('#endif //OPS_MPI')
+      code('')
 
     code('#ifdef OPS_DEBUG')
     code('ops_register_args(args, "'+name+'");')
     code('#endif')
     code('')
 
-    if arg_idx:
+    if arg_idx == 1:
+      code('')
+      code('int arg_idx['+str(NDIM)+'];')
       code('#ifdef OPS_MPI')
       for n in range (0,NDIM):
-        code('int arg_idx_'+str(n)+' = arg_idx['+str(n)+'];')
+        code('arg_idx['+str(n)+'] = sb->decomp_disp['+str(n)+']+start['+str(n)+'];')
       code('#else //OPS_MPI')
       for n in range (0,NDIM):
-        code('int arg_idx_'+str(n)+' = start['+str(n)+'];')
+        code('arg_idx['+str(n)+'] = start['+str(n)+'];')
+      code('#endif //OPS_MPI')
+
+    if(MULTI_GRID):
+      code('#ifdef OPS_MPI')
+      code('if (compute_ranges(args, '+str(nargs)+',block, range, start, end, arg_idx) < 0) return;')
+      code('#else //OPS_MPI')
+      FOR('n','0',str(NDIM))
+      code('start[n] = range[2*n];end[n] = range[2*n+1];')
+      ENDFOR()
       code('#endif //OPS_MPI')
 
     if MULTI_GRID:
@@ -318,7 +347,7 @@ def ops_gen_mpi(master, date, consts, kernels):
       for n in range (0,NDIM):
         code('global_idx['+str(n)+'] = start['+str(n)+'];')
       code('#endif //OPS_MPI')
-    code('')
+      code('')
 
 
     if MULTI_GRID:
@@ -359,6 +388,7 @@ def ops_gen_mpi(master, date, consts, kernels):
               code('    &end[0],args['+str(n)+'].dat->size, args['+str(n)+'].stencil->stride) - offs['+str(n)+']['+str(d-1)+'] - offs['+str(n)+']['+str(d-2)+'];')
         code('')
 
+    code('')
     code('')
 
     for n in range (0, nargs):
@@ -617,7 +647,7 @@ def ops_gen_mpi(master, date, consts, kernels):
           code('')
           code('#ifdef OPS_MPI')
           for n in range (0,1):
-            code('global_idx['+str(n)+'] = arg_idx_'+str(n)+';')
+            code('global_idx['+str(n)+'] = arg_idx['+str(n)+'];')
           code('#else //OPS_MPI')
           for n in range (0,1):
             code('global_idx['+str(n)+'] = start['+str(n)+'];')

@@ -65,6 +65,7 @@ void ops_par_loop_update_halo_kernel4_minus_4_a(char const *name, ops_block bloc
     start[n] = range[2*n];end[n] = range[2*n+1];
   }
   #endif //OPS_MPI
+
   #ifdef OPS_DEBUG
   ops_register_args(args, "update_halo_kernel4_minus_4_a");
   #endif

@@ -1177,7 +1177,9 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim,
 
   ops_dat created_dat = ops_decl_dat_char(block, dat_dim,
       read_size/*global dat size in each dimension*/,
-      read_base, read_d_m, read_d_p, data/*null for now*/,
+      read_base, read_d_m, read_d_p,
+      NULL /*// NULL here is multi grid stride .. need to fix this*/,
+      data/*null for now*/,
       type_size/*size of(type)*/, type, dat_name );
 
   created_dat->is_hdf5 = 1;

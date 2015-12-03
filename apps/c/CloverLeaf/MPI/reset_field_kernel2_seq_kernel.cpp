@@ -68,6 +68,7 @@ void ops_par_loop_reset_field_kernel2(char const *name, ops_block block, int dim
     start[n] = range[2*n];end[n] = range[2*n+1];
   }
   #endif //OPS_MPI
+
   #ifdef OPS_DEBUG
   ops_register_args(args, "reset_field_kernel2");
   #endif

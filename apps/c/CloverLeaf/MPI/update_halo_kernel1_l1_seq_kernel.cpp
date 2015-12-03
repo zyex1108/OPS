@@ -75,6 +75,7 @@ void ops_par_loop_update_halo_kernel1_l1(char const *name, ops_block block, int 
     start[n] = range[2*n];end[n] = range[2*n+1];
   }
   #endif //OPS_MPI
+
   #ifdef OPS_DEBUG
   ops_register_args(args, "update_halo_kernel1_l1");
   #endif

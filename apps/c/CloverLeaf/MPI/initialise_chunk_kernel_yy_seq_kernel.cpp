@@ -64,13 +64,10 @@ void ops_par_loop_initialise_chunk_kernel_yy(char const *name, ops_block block, 
     start[n] = range[2*n];end[n] = range[2*n+1];
   }
   #endif //OPS_MPI
+
   #ifdef OPS_DEBUG
   ops_register_args(args, "initialise_chunk_kernel_yy");
   #endif
-
-  offs[0][0] = args[0].stencil->stride[0]*1;  //unit step in x dimension
-  offs[0][1] = off2D(1, &start[0],
-      &end[0],args[0].dat->size, args[0].stencil->stride) - offs[0][0];
 
 
   int arg_idx[2];
@@ -81,6 +78,11 @@ void ops_par_loop_initialise_chunk_kernel_yy(char const *name, ops_block block, 
   arg_idx[0] = start[0];
   arg_idx[1] = start[1];
   #endif //OPS_MPI
+  offs[0][0] = args[0].stencil->stride[0]*1;  //unit step in x dimension
+  offs[0][1] = off2D(1, &start[0],
+      &end[0],args[0].dat->size, args[0].stencil->stride) - offs[0][0];
+
+
 
   int off0_0 = offs[0][0];
   int off0_1 = offs[0][1];

@@ -78,6 +78,7 @@ void ops_par_loop_advec_cell_kernel4_ydir(char const *name, ops_block block, int
     start[n] = range[2*n];end[n] = range[2*n+1];
   }
   #endif //OPS_MPI
+
   #ifdef OPS_DEBUG
   ops_register_args(args, "advec_cell_kernel4_ydir");
   #endif
