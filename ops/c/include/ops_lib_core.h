@@ -392,6 +392,7 @@ void ops_set_dirtybit_host(ops_arg *args, int nargs); //data updated on host .. 
 void ops_set_halo_dirtybit(ops_arg *arg);
 void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range);
 void ops_halo_exchanges(ops_arg* args, int nargs, int *range);
+void ops_halo_exchanges_mgrid(ops_arg* args, int nargs, int *range, int* global_idx);
 void ops_exchange_halo(ops_arg* arg, int d /*depth*/);
 void ops_exchange_halo2(ops_arg* arg, int* d_pos, int* d_neg /*depth*/);
 void ops_exchange_halo3(ops_arg* arg, int* d_pos, int* d_neg /*depth*/, int *iter_range);
