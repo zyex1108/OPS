@@ -59,12 +59,12 @@ MPI_Comm OPS_MPI_HDF5_WORLD;
 //HDF5 APIs definitions
 hid_t file_id_in;      //file identifier
 
-sub_block_list *OPS_sub_block_list;// pointer to list holding sub-block
-                                   // geometries
+// sub_block_list *OPS_sub_block_list;// pointer to list holding sub-block
+//                                    // geometries
 
 
-sub_dat_list *OPS_sub_dat_list;// pointer to list holding sub-dat
-                                 // details
+// sub_dat_list *OPS_sub_dat_list;// pointer to list holding sub-dat
+//                                  // details
 
 /*******************************************************************************
 * Routine to remove the intra-block halos from the flattend 1D dat
@@ -264,7 +264,7 @@ void ops_fetch_block_hdf5_file_internal(ops_block block, char const *file_name, 
     herr_t err;         //error code
 
     if(created) {
-      file_id = file_id;
+      file_id = file_id_in;
     } else {
        //create new communicator
       int my_rank, comm_size;
@@ -315,7 +315,7 @@ void ops_fetch_block_hdf5_file_internal(ops_block block, char const *file_name, 
     H5Gclose(group_id);
     if (!created) {
       H5Pclose(plist_id);
-      H5PcloseFclose(file_id);
+      H5Fclose(file_id);
       MPI_Comm_free(&OPS_MPI_HDF5_WORLD);
     }
   }
@@ -594,8 +594,10 @@ void ops_fetch_dat_hdf5_file_internal(ops_dat dat, char const *file_name, int cr
     }
 
     if(H5Lexists(file_id, block->name, H5P_DEFAULT) == 0) {
-      ops_printf("ops_fetch_dat_hdf5_file: ops_block on which this ops_dat %s is declared does not exists in the file ... Aborting\n", dat->name);
-      MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+      if (OPS_diags>3) ops_printf("ops_fetch_dat_hdf5_file: ops_block on which this ops_dat %s is declared does not exist in the file ... Fetching\n", dat->name);
+      if(!created) file_id_in = file_id;
+      ops_fetch_block_hdf5_file_internal(block, file_name, 1);
+      //MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
     }
     else {
 
@@ -1509,11 +1511,11 @@ void ops_dump_to_hdf5(char const *file_name) {
     file_id_in = H5Fopen(file_name, H5F_ACC_RDWR, plist_id);
 
 
-    printf ( "Dumping block %15s to HDF5 file %s\n", OPS_block_list[n].block->name, file_name);
+    ops_printf ( "Dumping block %15s to HDF5 file %s\n", OPS_block_list[n].block->name, file_name);
     ops_fetch_block_hdf5_file_internal(OPS_block_list[n].block, file_name, 1);
 
     TAILQ_FOREACH(item, &OPS_block_list[n].datasets, entries) {
-      printf ( "Dumping dat %15s to HDF5 file %s\n", (item->dat)->name, file_name);
+      ops_printf ( "Dumping dat %15s to HDF5 file %s\n", (item->dat)->name, file_name);
       if (item->dat->e_dat != 1) //currently cannot write edge dats .. need to fix this
         ops_fetch_dat_hdf5_file_internal(item->dat, file_name, 1);
     }
@@ -1523,13 +1525,13 @@ void ops_dump_to_hdf5(char const *file_name) {
   }
 
   for ( int i = 0; i < OPS_stencil_index; i++ ) {
-    printf ( "Dumping stencil %15s to HDF5 file %s\n", OPS_stencil_list[i]->name, file_name);
+    ops_printf ( "Dumping stencil %15s to HDF5 file %s\n", OPS_stencil_list[i]->name, file_name);
     ops_fetch_stencil_hdf5_file(OPS_stencil_list[i], file_name);
   }
 
   printf("halo index = %d \n",OPS_halo_index);
   for (int i = 0; i < OPS_halo_index; i++) {
-    printf ( "Dumping halo %15s--%15s to HDF5 file %s\n",
+    ops_printf ( "Dumping halo %15s--%15s to HDF5 file %s\n",
     OPS_halo_list[i]->from->name, OPS_halo_list[i]->to->name,file_name);
     ops_fetch_halo_hdf5_file(OPS_halo_list[i], file_name);
   }

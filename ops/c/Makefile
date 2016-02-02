@@ -174,9 +174,11 @@ mpi: mklib core $(OBJ)/ops_lib_core.o
 	$(MPICC) $(MPIFLAGS) -I$(INC) -c $(SRC)/mpi/ops_mpi_rt_support.c -o $(OBJ)/ops_mpi_rt_support.o
 	$(MPICC) $(MPIFLAGS) -I$(INC) -c $(SRC)/mpi/ops_mpi_rt_support_host.c -o $(OBJ)/ops_mpi_rt_support_host.o
 	$(MPICC) $(MPIFLAGS) -I$(INC)  $(HDF5_INC) $(HDF5_LIB) -c $(SRC)/mpi/ops_mpi_hdf5.c -o $(OBJ)/ops_mpi_hdf5.o
+	$(MPICC) $(MPIFLAGS) -I$(INC)  $(HDF5_INC) $(HDF5_LIB) -c $(SRC)/mpi/ops_mpi_checkpoint.c -o $(OBJ)/ops_mpi_checkpoint.o
 	ar -r $(LIB)/libops_mpi.a $(OBJ)/ops_lib_core.o $(OBJ)/ops_lazy.o $(OBJ)/ops_checkpointing.o \
 	$(OBJ)/ops_util.o $(OBJ)/ops_mpi_decl.o $(OBJ)/ops_mpi_rt_support.o $(OBJ)/ops_checkpointing_strategy.o \
-	$(OBJ)/ops_mpi_core.o $(OBJ)/ops_mpi_rt_support_host.o $(OBJ)/ops_mpi_partition.o $(OBJ)/ops_mpi_hdf5.o
+	$(OBJ)/ops_mpi_core.o $(OBJ)/ops_mpi_rt_support_host.o $(OBJ)/ops_mpi_partition.o $(OBJ)/ops_mpi_hdf5.o \
+	$(OBJ)/ops_mpi_checkpoint.o
 
 mpi_cuda: mklib cuda $(OBJ)/ops_cuda_rt_support.o
 	$(MPICC) $(MPIFLAGS) $(CUDA_ALIGNE_FLAG) \
@@ -187,10 +189,12 @@ mpi_cuda: mklib cuda $(OBJ)/ops_cuda_rt_support.o
 	$(NVCC) $(NVCCFLAGS) -I$(INC) -c $(SRC)/mpi/ops_mpi_rt_support_cuda.cu -o \
 	$(OBJ)/ops_mpi_rt_support_cuda.o -I$(MPI_INSTALL_PATH)/include
 	$(MPICC) $(MPIFLAGS) -I$(INC)  $(HDF5_INC) $(HDF5_LIB) -c $(SRC)/mpi/ops_mpi_hdf5.c -o $(OBJ)/ops_mpi_hdf5.o
+	$(MPICC) $(MPIFLAGS) -I$(INC)  $(HDF5_INC) $(HDF5_LIB) -c $(SRC)/mpi/ops_mpi_checkpoint.c -o $(OBJ)/ops_mpi_checkpoint.o
 	ar -r $(LIB)/libops_mpi_cuda.a $(OBJ)/ops_lib_core.o $(OBJ)/ops_lazy.o \
 	$(OBJ)/ops_checkpointing.o $(OBJ)/ops_util.o $(OBJ)/ops_mpi_decl_cuda.o $(OBJ)/ops_mpi_rt_support.o \
 	$(OBJ)/ops_mpi_core.o $(OBJ)/ops_mpi_rt_support_cuda.o $(OBJ)/ops_mpi_partition.o \
-	$(OBJ)/ops_cuda_rt_support.o $(OBJ)/ops_mpi_hdf5.o $(OBJ)/ops_checkpointing_strategy.o
+	$(OBJ)/ops_cuda_rt_support.o $(OBJ)/ops_mpi_hdf5.o $(OBJ)/ops_checkpointing_strategy.o \
+	$(OBJ)/ops_mpi_checkpoint.o
 
 opencl: mklib core hdf5_seq $(SRC)/opencl/ops_opencl_decl.c $(OBJ)/ops_lib_core.o
 	$(CXX) $(CCFLAGS) $(OPENCL_INC) -I$(INC) \
