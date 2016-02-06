@@ -186,6 +186,7 @@ int main(int argc, char **argv)
   ops_checkpointing_exit();
   ops_timers(&ct1, &et1);
   if(profiler_on == 1) {
+    ops_timing_output(stdout);
     process_profile();
   }
 
