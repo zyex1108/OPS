@@ -239,4 +239,3 @@ void ops_checkpointing_duplicate_data(ops_dat dat, int my_type, int my_nelems, c
 void ops_get_dat_full_range(ops_dat dat, int **full_range) {
   *full_range = OPS_sub_dat_list[dat->index]->gbl_size;
 }
-

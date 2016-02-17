@@ -724,6 +724,9 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range) {
         d_pos = MAX(d_pos, args[i].stencil->stencil[dat_ndim * p + dim]);
         d_neg = MIN(d_neg, args[i].stencil->stencil[dat_ndim * p + dim]);
       }
+
+      if (args[i].stencil->type == 1) d_neg--;
+
       if (d_pos>0 || d_neg <0)
         ops_exchange_halo_packer(dat,d_pos,d_neg,range,dim,send_recv_offsets);
     }
@@ -762,6 +765,7 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range) {
         d_pos = MAX(d_pos, args[i].stencil->stencil[dat_ndim * p + dim]);
         d_neg = MIN(d_neg, args[i].stencil->stencil[dat_ndim * p + dim]);
       }
+      if (args[i].stencil->type == 1) d_neg--;
       if (d_pos>0 || d_neg <0)
         ops_exchange_halo_unpacker(dat,d_pos,d_neg,range,dim,send_recv_offsets);
     }
