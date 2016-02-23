@@ -688,7 +688,7 @@ void ops_exchange_halo_unpacker(ops_dat dat, int d_pos, int d_neg, int *iter_ran
   for (int d = 0; d <= actual_depth_recv; d++) sd->dirty_dir_recv[2*MAX_DEPTH*dim + d] = 0;
 }
 
-void ops_halo_exchanges(ops_arg* args, int nargs, int *range) {
+void ops_halo_exchanges(ops_arg* args, int nargs, int *range_in) {
   // double c1,c2,t1,t2;
   //printf("*************** range[i] %d %d %d %d\n",range[0],range[1],range[2], range[3]);
   int send_recv_offsets[4]; //{send_1, recv_1, send_2, recv_2}, for the two directions, negative then positive
@@ -706,6 +706,16 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range) {
       if( dat_ndim <= dim || dat->size[dim] <= 1 ) continue;  //dimension of the sub-block is less than current dim OR has a size of 1 (edge dat)
       comm = OPS_sub_block_list[dat->block->index]->comm; //use communicator for this sub-block
 
+      int range[2*OPS_MAX_DIM];
+      for (int d2 = 0; d2 < dat_ndim; d2++) {
+        if (args[i].stencil->type ==2) {
+          range[2*d2+0] = range_in[2*d2+0]*args[i].stencil->mgrid_stride[d2];
+          range[2*d2+1] = range_in[2*d2+1]*args[i].stencil->mgrid_stride[d2];
+        } else {
+          range[2*d2+0] = range_in[2*d2+0];
+          range[2*d2+1] = range_in[2*d2+1];
+        }
+      }
       //check if there is an intersection of dependency range with my full range
       //in *other* dimensions (i.e. any other dimension d2 ,but the current one dim)
       for (int d2 = 0; d2 < dat_ndim; d2++) {
@@ -726,7 +736,6 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range) {
       }
 
       if (args[i].stencil->type == 1) d_neg--;
-
       if (d_pos>0 || d_neg <0)
         ops_exchange_halo_packer(dat,d_pos,d_neg,range,dim,send_recv_offsets);
     }
@@ -760,6 +769,17 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range) {
       ops_dat dat = args[i].dat;
       int dat_ndim = OPS_sub_block_list[dat->block->index]->ndim;
       if( dat_ndim <= dim || dat->size[dim] <= 1) continue;
+      int range[2*OPS_MAX_DIM];
+      for (int d2 = 0; d2 < dat_ndim; d2++) {
+        if (args[i].stencil->type ==2) {
+          range[2*d2+0] = range_in[2*d2+0]*args[i].stencil->mgrid_stride[d2];
+          range[2*d2+1] = range_in[2*d2+1]*args[i].stencil->mgrid_stride[d2];
+        } else {
+          range[2*d2+0] = range_in[2*d2+0];
+          range[2*d2+1] = range_in[2*d2+1];
+        }
+      }
+
       int d_pos=0,d_neg=0;
       for (int p = 0; p < args[i].stencil->points; p++) {
         d_pos = MAX(d_pos, args[i].stencil->stencil[dat_ndim * p + dim]);
