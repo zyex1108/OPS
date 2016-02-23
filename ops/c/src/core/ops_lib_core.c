@@ -794,10 +794,12 @@ void ops_dump3(ops_dat dat, const char* name) {
   */
 }
 
-void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name)
+bool ops_checkpointing_filename(const char *file_name, char *filename_out, char *filename_out2);
+void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name_in)
 {
   //printf("file %s, name %s type = %s\n",file_name, dat->name, dat->type);
-
+  char file_name[100];
+  ops_checkpointing_filename(file_name_in, file_name, NULL);
   //TODO: this has to be backend-specific
   FILE *fp;
   if ( (fp = fopen(file_name,"a")) == NULL) {
