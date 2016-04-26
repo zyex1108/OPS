@@ -95,6 +95,9 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     #parse stencil to locate strided access
     stride = [1] * nargs * NDIM
 
+    restrict = [1] * nargs
+    prolong = [1] * nargs
+
     if NDIM == 2:
       for n in range (0, nargs):
         if str(stens[n]).find('STRID2D_X') > 0:
@@ -113,6 +116,19 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
         elif str(stens[n]).find('STRID3D_Z') > 0:
           stride[NDIM*n] = 0
           stride[NDIM*n+1] = 0
+
+    ### Determine if this is a MULTI_GRID LOOP with
+    ### either restrict or prolong
+    MULTI_GRID = 0
+    for n in range (0, nargs):
+      restrict[n] = 0
+      prolong[n] = 0
+      if str(stens[n]).find('RESTRICT') > 0:
+        restrict[n] = 1
+        MULTI_GRID = 1
+      if str(stens[n]).find('PROLONG') > 0 :
+        prolong[n] = 1
+        MULTI_GRID = 1
 
     reduct = 0
     for n in range (0, nargs):
@@ -266,6 +282,8 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
         code(typs[n]+' p_a'+str(n)+',')
       else:
         code(typs[n]+' *p_a'+str(n)+',')
+        if restrict[n] or prolong[n]:
+          code('int *stride_'+str(n)+',')
     if arg_idx:
       if NDIM == 1:
         code('int arg_idx0,')
@@ -273,6 +291,14 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
         code('int arg_idx0, int arg_idx1,')
       elif NDIM == 3:
         code('int arg_idx0, int arg_idx1, int arg_idx2,')
+
+    if MULTI_GRID:
+      if NDIM == 1:
+        code('int global_idx0,')
+      elif NDIM == 2:
+        code('int global_idx0, int global_idx1,')
+      elif NDIM == 3:
+        code('int global_idx0, int global_idx1, int global_idx2,')
 
     if NDIM == 1:
       code('int x_size) {')
@@ -290,6 +316,12 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
           #else:
           for d in range(0,int(dims[n])):
             code(typs[n]+' p_a'+str(n)+'_'+str(d)+' = p_a'+str(n)+'['+str(d)+'];')
+      if restrict[n] or prolong[n]:
+        code('int stride_'+str(n)+'0 = stride_'+str(n)+'[0];')
+        if NDIM == 2:
+          code('int stride_'+str(n)+'1 = stride_'+str(n)+'[1];')
+        if NDIM == 3:
+          code('int stride_'+str(n)+'2 = stride_'+str(n)+'[2];')
 
     line = '#pragma acc parallel deviceptr('
     for n in range (0,nargs):
@@ -380,14 +412,27 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
     text = name+'( '
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
+        if restrict[n] == 1:
+            n_x = 'n_x*stride_'+str(n)+'0'
+            n_y = 'n_y*stride_'+str(n)+'1'
+            n_z = 'n_z*stride_'+str(n)+'2'
+        elif prolong[n] == 1:
+          n_x = '(n_x+global_idx0%stride_'+str(n)+'0)/stride_'+str(n)+'0'
+          n_y = '(n_y+global_idx1%stride_'+str(n)+'1)/stride_'+str(n)+'1'
+          n_z = '(n_z+global_idx2%stride_'+str(n)+'2)/stride_'+str(n)+'2'
+        else:
+          n_x = 'n_x'
+          n_y = 'n_y'
+          n_z = 'n_z'
+
         if NDIM == 1:
-          text = text +' p_a'+str(n)+' + n_x*'+str(stride[NDIM*n])+'*'+str(dims[n])
+          text = text +' p_a'+str(n)+' + '+n_x+'*'+str(stride[NDIM*n])+'*'+str(dims[n])
         elif NDIM == 2:
-          text = text +' p_a'+str(n)+' + n_x*'+str(stride[NDIM*n])+'*'+str(dims[n])+\
-          ' + n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+'*'+str(dims[n])
+          text = text +' p_a'+str(n)+' + '+n_x+'*'+str(stride[NDIM*n])+'*'+str(dims[n])+\
+          ' + '+n_y+'*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+'*'+str(dims[n])
         elif NDIM == 3:
-          text = text +' p_a'+str(n)+' + n_x*'+str(stride[NDIM*n])+'*'+str(dims[n])+' + n_y*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+'*'+str(dims[n])
-          text = text + ' + n_z*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+2])
+          text = text +' p_a'+str(n)+' + '+n_x+'*'+str(stride[NDIM*n])+'*'+str(dims[n])+' + '+n_y+'*xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])+'*'+str(dims[n])
+          text = text + ' + '+n_z+'*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+2])
       elif arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ:
           if dims[n].isdigit() and int(dims[n])==1:
@@ -485,6 +530,8 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
         code(typs[n]+' p_a'+str(n)+',')
       else:
         code(typs[n]+' *p_a'+str(n)+',')
+        if restrict[n] or prolong[n]:
+          code('int *stride_'+str(n)+',')
     if arg_idx:
       if NDIM == 1:
         code('int arg_idx0,')
@@ -492,6 +539,14 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
         code('int arg_idx0, int arg_idx1,')
       elif NDIM == 3:
         code('int arg_idx0, int arg_idx1, int arg_idx2,')
+
+    if MULTI_GRID:
+      if NDIM == 1:
+        code('int global_idx0,')
+      elif NDIM == 2:
+        code('int global_idx0, int global_idx1,')
+      elif NDIM == 3:
+        code('int global_idx0, int global_idx1, int global_idx2,')
 
     if NDIM == 1:
       code('int x_size);')
@@ -556,76 +611,40 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
 
     code('#ifdef OPS_MPI')
     code('sub_block_list sb = OPS_sub_block_list[block->index];')
-    code('if (!sb->owned) return;')
-    FOR('n','0',str(NDIM))
-    code('start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];')
-    IF('start[n] >= range[2*n]')
-    code('start[n] = 0;')
-    ENDIF()
-    ELSE()
-    code('start[n] = range[2*n] - start[n];')
-    ENDIF()
-    code('if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];')
-    IF('end[n] >= range[2*n+1]')
-    code('end[n] = range[2*n+1] - sb->decomp_disp[n];')
-    ENDIF()
-    ELSE()
-    code('end[n] = sb->decomp_size[n];')
-    ENDIF()
-    code('if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))')
-    code('  end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);')
-    ENDFOR()
-    code('#else //OPS_MPI')
-    FOR('n','0',str(NDIM))
-    code('start[n] = range[2*n];end[n] = range[2*n+1];')
-    ENDFOR()
     code('#endif //OPS_MPI')
 
     code('')
-    code('int x_size = MAX(0,end[0]-start[0]);')
-    if NDIM==2:
-      code('int y_size = MAX(0,end[1]-start[1]);')
-    if NDIM==3:
-      code('int y_size = MAX(0,end[1]-start[1]);')
-      code('int z_size = MAX(0,end[2]-start[2]);')
-    code('')
+    code('int arg_idx['+str(NDIM)+'];')
+    code('int arg_idx_base['+str(NDIM)+'];')
 
-    if arg_idx:
-      code('int arg_idx['+str(NDIM)+'];')
+
+    code('#ifdef OPS_MPI')
+    code('if (compute_ranges(args, '+str(nargs)+',block, range, start, end, arg_idx) < 0) return;')
+    code('#else //OPS_MPI')
+    FOR('n','0',str(NDIM))
+    code('start[n] = range[2*n];end[n] = range[2*n+1];')
+    code('arg_idx[n] = start[n];')
+    ENDFOR()
+    code('#endif //OPS_MPI')
+    FOR('n','0',str(NDIM))
+    code('arg_idx_base[n] = arg_idx[n];')
+    ENDFOR()
+
+    if MULTI_GRID:
+      code('int global_idx['+str(NDIM)+'];')
       code('#ifdef OPS_MPI')
       for n in range (0,NDIM):
-        code('arg_idx['+str(n)+'] = sb->decomp_disp['+str(n)+']+start['+str(n)+'];')
+        code('global_idx['+str(n)+'] = arg_idx['+str(n)+'];')
       code('#else //OPS_MPI')
       for n in range (0,NDIM):
-        code('arg_idx['+str(n)+'] = start['+str(n)+'];')
+        code('global_idx['+str(n)+'] = start['+str(n)+'];')
       code('#endif //OPS_MPI')
-    code('')
-
-    for n in range (0,nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        code('xdim'+str(n)+' = args['+str(n)+'].dat->size[0];')#*args['+str(n)+'].dat->dim;')
-        if NDIM==3:
-          code('ydim'+str(n)+' = args['+str(n)+'].dat->size[1];')
-
-
-    condition = ''
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        condition = condition + 'xdim'+str(n)+' != xdim'+str(n)+'_'+name+'_h || '
-        if NDIM==3:
-          condition = condition + 'ydim'+str(n)+' != ydim'+str(n)+'_'+name+'_h || '
-    condition = condition[:-4]
-    IF(condition)
+      code('')
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('xdim'+str(n)+'_'+name+' = xdim'+str(n)+';')
-        code('xdim'+str(n)+'_'+name+'_h = xdim'+str(n)+';')
-        if NDIM==3:
-          code('ydim'+str(n)+'_'+name+' = ydim'+str(n)+';')
-          code('ydim'+str(n)+'_'+name+'_h = ydim'+str(n)+';')
-    ENDIF()
-    code('')
+        code('int dat'+str(n)+' = args['+str(n)+'].dat->elem_size;')
+
 
     GBL_READ = False
     GBL_READ_MDIM = False
@@ -648,12 +667,6 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
           GBL_MIN = True
         if accs[n] == OPS_WRITE:
           GBL_WRITE = True
-
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        #code('int off'+str(n)+'_1 = offs['+str(n)+'][0];')
-        #code('int off'+str(n)+'_2 = offs['+str(n)+'][1];')
-        code('int dat'+str(n)+' = args['+str(n)+'].dat->elem_size;')
 
     code('')
     for n in range (0, nargs):
@@ -690,9 +703,38 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
       code('mvConstArraysToDevice(consts_bytes);')
       code('#endif //OPS_GPU')
 
+    #some custom logic for multigrid
+    if MULTI_GRID:
+      for n in range (0, nargs):
+        if restrict[n]  == 1 :
+          code('int start_'+str(n)+'[2]; int end_'+str(n)+'[2]; int stride_'+str(n)+'[2];')
+          FOR('n','0',str(NDIM))
+          code('stride_'+str(n)+'[n] = args['+str(n)+'].stencil->mgrid_stride[n];')
+          code('start_'+str(n)+'[n]  = start[n]*stride_'+str(n)+'[n];')
+          code('end_'+str(n)+'[n]    = end[n];')
+          ENDFOR()
+        elif prolong[n] == 1:
+          comm('This arg has a prolong stencil - so create different ranges')
+          code('int start_'+str(n)+'[2]; int end_'+str(n)+'[2]; int stride_'+str(n)+'[2];int d_size_'+str(n)+'[2];')
+          code('#ifdef OPS_MPI')
+          FOR('n','0',str(NDIM))
+          code('sub_dat *sd'+str(n)+' = OPS_sub_dat_list[args['+str(n)+'].dat->index];')
+          code('stride_'+str(n)+'[n] = args['+str(n)+'].stencil->mgrid_stride[n];')
+          code('d_size_'+str(n)+'[n] = args['+str(n)+'].dat->d_m[n] + sd'+str(n)+'->decomp_size[n] - args['+str(n)+'].dat->d_p[n];')
+          code('start_'+str(n)+'[n] = global_idx[n]/stride_'+str(n)+'[n] - sd'+str(n)+'->decomp_disp[n] + args['+str(n)+'].dat->d_m[n];')
+          code('end_'+str(n)+'[n] = start_'+str(n)+'[n] + d_size_'+str(n)+'[n];')
+          ENDFOR()
+          code('#else')
+          FOR('n','0',str(NDIM))
+          code('stride_'+str(n)+'[n] = args['+str(n)+'].stencil->mgrid_stride[n];')
+          code('d_size_'+str(n)+'[n] = args['+str(n)+'].dat->d_m[n] + args['+str(n)+'].dat->size[n] - args['+str(n)+'].dat->d_p[n];')
+          code('start_'+str(n)+'[n] = global_idx[n]/stride_'+str(n)+'[n];')
+          code('end_'+str(n)+'[n] = start_'+str(n)+'[n] + d_size_'+str(n)+'[n];')
+          ENDFOR()
+          code('#endif')
 
     comm('')
-    comm('set up initial pointers')
+    comm('set up initial pointers and exchange halos if necessary')
     code('int d_m[OPS_MAX_DIM];')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
@@ -702,19 +744,30 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
         code('for (int d = 0; d < dim; d++) d_m[d] = args['+str(n)+'].dat->d_m[d];')
         code('#endif //OPS_MPI')
         code('int base'+str(n)+' = dat'+str(n)+' * 1 *')
-        code('  (start[0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->base[0] - d_m[0]);')
+        if prolong[n] == 1:
+          code('  ((start_'+str(n)+'[0]) * args[0].stencil->stride[0] - args[0].dat->base[0]- d_m[0]);')
+        elif restrict[n] == 1:
+          code('  ((start_'+str(n)+'[0]) * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->base[0] - d_m[0]);')
+        else:
+          code('  (start[0] * args['+str(n)+'].stencil->stride[0] - args['+str(n)+'].dat->base[0] - d_m[0]);')
+
         for d in range (1, NDIM):
           line = 'base'+str(n)+' = base'+str(n)+'+ dat'+str(n)+' *\n'
           for d2 in range (0,d):
             line = line + config.depth*' '+'  args['+str(n)+'].dat->size['+str(d2)+'] *\n'
           code(line[:-1])
-          code('  (start['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->base['+str(d)+'] - d_m['+str(d)+']);')
+          if prolong[n] == 1:
+            code('  ((start_'+str(n)+'['+str(d)+']) * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->base['+str(d)+'] - d_m['+str(d)+']);')
+          elif restrict[n] == 1:
+            code('  ((start_'+str(n)+'['+str(d)+']) * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->base['+str(d)+'] - d_m['+str(d)+']);')
+          else:
+            code('  (start['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->base['+str(d)+'] - d_m['+str(d)+']);')
+
 
         code('#ifdef OPS_GPU')
         code(typs[n]+' *p_a'+str(n)+' = ('+typs[n]+' *)((char *)args['+str(n)+'].data_d + base'+str(n)+');')
         code('#else')
         code(typs[n]+' *p_a'+str(n)+' = ('+typs[n]+' *)((char *)args['+str(n)+'].data + base'+str(n)+');')
-        #code('char *p_a'+str(n)+' = (char *)args['+str(n)+'].data + base'+str(n)+';')
         code('#endif')
         code('')
       elif arg_typ[n] == 'ops_arg_gbl':
@@ -733,6 +786,46 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
         code(typs[n]+' *p_a'+str(n)+' = NULL;')
         code('')
 
+    #iteration range size
+    code('')
+    code('int x_size = MAX(0,end[0]-start[0]);')
+    if NDIM==2:
+      code('int y_size = MAX(0,end[1]-start[1]);')
+    if NDIM==3:
+      code('int y_size = MAX(0,end[1]-start[1]);')
+      code('int z_size = MAX(0,end[2]-start[2]);')
+    code('')
+
+    comm("initialize global variable with the dimension of dats")
+    #array sizes
+    for n in range (0,nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        code('xdim'+str(n)+' = args['+str(n)+'].dat->size[0];')#*args['+str(n)+'].dat->dim;')
+        if NDIM==3:
+          code('ydim'+str(n)+' = args['+str(n)+'].dat->size[1];')
+
+    #array sizes - upload to GPU
+    condition = ''
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        condition = condition + 'xdim'+str(n)+' != xdim'+str(n)+'_'+name+'_h || '
+        if NDIM==3:
+          condition = condition + 'ydim'+str(n)+' != ydim'+str(n)+'_'+name+'_h || '
+    condition = condition[:-4]
+    IF(condition)
+
+    #array sizes - upload to GPU
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        code('xdim'+str(n)+'_'+name+' = xdim'+str(n)+';')
+        code('xdim'+str(n)+'_'+name+'_h = xdim'+str(n)+';')
+        if NDIM==3:
+          code('ydim'+str(n)+'_'+name+' = ydim'+str(n)+';')
+          code('ydim'+str(n)+'_'+name+'_h = ydim'+str(n)+';')
+    ENDIF()
+    code('')
+
+    comm('Halo Exchanges')
     code('')
     code('#ifdef OPS_GPU')
     code('ops_H_D_exchanges_device(args, '+str(nargs)+');')
@@ -761,6 +854,9 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
         code('*p_a'+str(n)+',')
       else:
         code('p_a'+str(n)+',')
+        if restrict[n] or prolong[n]:
+          code('stride_'+str(n)+',')
+
     if arg_idx:
       if NDIM==1:
         code('arg_idx[0],')
@@ -768,6 +864,13 @@ def ops_gen_mpi_openacc(master, date, consts, kernels):
         code('arg_idx[0], arg_idx[1],')
       elif NDIM==3:
         code('arg_idx[0], arg_idx[1], arg_idx[2],')
+    if MULTI_GRID:
+      if NDIM==1:
+        code('global_idx[0],')
+      elif NDIM==2:
+        code('global_idx[0], global_idx[1],')
+      elif NDIM==3:
+        code('global_idx[0], global_idx[1], global_idx[2],')
 
     if NDIM == 1:
       code('x_size);')
