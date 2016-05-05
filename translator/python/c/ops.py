@@ -669,10 +669,10 @@ def main(source_files):
 
 
   ops_gen_mpi(str(source_files[0]), date, consts, kernels)
-  ops_gen_mpi_openmp(str(source_files[0]), date, consts, kernels)
-  ops_gen_mpi_cuda(str(source_files[0]), date, consts, kernels)
-  ops_gen_mpi_openacc(str(source_files[0]), date, consts, kernels)
-  ops_gen_mpi_opencl(str(source_files[0]), date, consts, kernels)
+  #ops_gen_mpi_openmp(str(source_files[0]), date, consts, kernels)
+  #ops_gen_mpi_cuda(str(source_files[0]), date, consts, kernels)
+  #ops_gen_mpi_openacc(str(source_files[0]), date, consts, kernels)
+  #ops_gen_mpi_opencl(str(source_files[0]), date, consts, kernels)
 
   import subprocess
   retcode = subprocess.call("which clang-format > /dev/null", shell=True)
