@@ -636,7 +636,6 @@ def main(source_files):
           loc_old = endofcall + 1
           continue
 
-
       fid.write(text[loc_old:])
       fid.close()
       f.close()
