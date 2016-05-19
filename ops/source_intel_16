@@ -10,21 +10,23 @@ export OPS_COMPILER=intel
 export OPS_INSTALL_PATH=/home/mgiles/mudalige/OPS-GIT/OPS/ops
 
 #CUDA and NVIDIA OpenCL
-export PATH=/usr/local/cuda-6.5.14/bin:$PATH
-export LD_LIBRARY_PATH=/usr/local/cuda-6.5.14/lib64:$LD_LIBRARY_PATH
-export CUDA_INSTALL_PATH=/usr/local/cuda-6.5.14/
-export OPENCL_INSTALL_PATH=/usr/local/cuda-6.5.14/
+export PATH=/usr/local/cuda/bin:$PATH
+export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
+export CUDA_INSTALL_PATH=/usr/local/cuda/
+export OPENCL_INSTALL_PATH=/usr/local/cuda/
 
 
 #Intel MPI and Compilers
+module load intel-compilers
+module load intel-mpi
 export MPI_INSTALL_PATH=/opt/intel/impi/5.1.1.109/intel64
-source /opt/intel/compilers_and_libraries/linux/bin/compilervars.sh intel64
-source /opt/intel/compilers_and_libraries/linux/mpi/bin64/mpivars.sh intel64
+source /opt/intel/compilers_and_libraries_2016/linux/bin/compilervars.sh intel64
+source /opt/intel/compilers_and_libraries_2016/linux/mpi/bin64/mpivars.sh intel64
 
-export INTEL_PATH=/opt/intel/compilers_and_libraries/linux/
-export MPICH_CXX=/opt/intel/compilers_and_libraries/linux/bin/intel64/icpc
-export MPICH_CC=/opt/intel/compilers_and_libraries/linux/bin/intel64/icc
-export MPICH_F90=/opt/intel/compilers_and_libraries/linux/bin/intel64/ifort
+export INTEL_PATH=/opt/intel/compilers_and_libraries_2016/linux/
+export MPICH_CXX=/opt/intel/compilers_and_libraries_2016/linux/bin/intel64/icpc
+export MPICH_CC=/opt/intel/compilers_and_libraries_2016/linux/bin/intel64/icc
+export MPICH_F90=/opt/intel/compilers_and_libraries_2016/linux/bin/intel64/ifort
 
 #Intel based HDF5
 #unset HDF5_INSTALL_PATH
