@@ -3,7 +3,7 @@
 //
 #include "./OpenACC/poisson_common.h"
 
-#define OPS_GPU
+#undef OPS_GPU
 
 int xdim0_poisson_kernel_initialguess;
 

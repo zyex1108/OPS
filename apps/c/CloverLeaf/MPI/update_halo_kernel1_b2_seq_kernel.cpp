@@ -22,9 +22,18 @@ inline void update_halo_kernel1_b2(double *density0, double *density1,
 
 
 // host stub function
-void ops_par_loop_update_halo_kernel1_b2(char const *name, ops_block block, int dim, int* range,
- ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
- ops_arg arg4, ops_arg arg5, ops_arg arg6, ops_arg arg7) {
+void ops_par_loop_update_halo_kernel1_b2_execute(ops_kernel_descriptor *desc) {
+  ops_block block = desc->block;
+  int dim = desc->dim;
+  int *range = desc->range;
+  ops_arg arg0 = desc->args[0];
+  ops_arg arg1 = desc->args[1];
+  ops_arg arg2 = desc->args[2];
+  ops_arg arg3 = desc->args[3];
+  ops_arg arg4 = desc->args[4];
+  ops_arg arg5 = desc->args[5];
+  ops_arg arg6 = desc->args[6];
+  ops_arg arg7 = desc->args[7];
 
   //Timing
   double t1,t2,c1,c2;
@@ -49,175 +58,39 @@ void ops_par_loop_update_halo_kernel1_b2(char const *name, ops_block block, int 
   int start[2];
   int end[2];
 
-  #ifdef OPS_MPI
-  sub_block_list sb = OPS_sub_block_list[block->index];
-  if (!sb->owned) return;
-  for ( int n=0; n<2; n++ ){
-    start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
-    if (start[n] >= range[2*n]) {
-      start[n] = 0;
-    }
-    else {
-      start[n] = range[2*n] - start[n];
-    }
-    if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];
-    if (end[n] >= range[2*n+1]) {
-      end[n] = range[2*n+1] - sb->decomp_disp[n];
-    }
-    else {
-      end[n] = sb->decomp_size[n];
-    }
-    if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))
-      end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
-  }
-  #else //OPS_MPI
   for ( int n=0; n<2; n++ ){
     start[n] = range[2*n];end[n] = range[2*n+1];
   }
-  #endif //OPS_MPI
+
   #ifdef OPS_DEBUG
   ops_register_args(args, "update_halo_kernel1_b2");
   #endif
 
-  offs[0][0] = args[0].stencil->stride[0]*1;  //unit step in x dimension
-  offs[0][1] = off2D(1, &start[0],
-      &end[0],args[0].dat->size, args[0].stencil->stride) - offs[0][0];
 
-  offs[1][0] = args[1].stencil->stride[0]*1;  //unit step in x dimension
-  offs[1][1] = off2D(1, &start[0],
-      &end[0],args[1].dat->size, args[1].stencil->stride) - offs[1][0];
-
-  offs[2][0] = args[2].stencil->stride[0]*1;  //unit step in x dimension
-  offs[2][1] = off2D(1, &start[0],
-      &end[0],args[2].dat->size, args[2].stencil->stride) - offs[2][0];
-
-  offs[3][0] = args[3].stencil->stride[0]*1;  //unit step in x dimension
-  offs[3][1] = off2D(1, &start[0],
-      &end[0],args[3].dat->size, args[3].stencil->stride) - offs[3][0];
-
-  offs[4][0] = args[4].stencil->stride[0]*1;  //unit step in x dimension
-  offs[4][1] = off2D(1, &start[0],
-      &end[0],args[4].dat->size, args[4].stencil->stride) - offs[4][0];
-
-  offs[5][0] = args[5].stencil->stride[0]*1;  //unit step in x dimension
-  offs[5][1] = off2D(1, &start[0],
-      &end[0],args[5].dat->size, args[5].stencil->stride) - offs[5][0];
-
-  offs[6][0] = args[6].stencil->stride[0]*1;  //unit step in x dimension
-  offs[6][1] = off2D(1, &start[0],
-      &end[0],args[6].dat->size, args[6].stencil->stride) - offs[6][0];
-
-
-
-  int off0_0 = offs[0][0];
-  int off0_1 = offs[0][1];
-  int dat0 = args[0].dat->elem_size;
-  int off1_0 = offs[1][0];
-  int off1_1 = offs[1][1];
-  int dat1 = args[1].dat->elem_size;
-  int off2_0 = offs[2][0];
-  int off2_1 = offs[2][1];
-  int dat2 = args[2].dat->elem_size;
-  int off3_0 = offs[3][0];
-  int off3_1 = offs[3][1];
-  int dat3 = args[3].dat->elem_size;
-  int off4_0 = offs[4][0];
-  int off4_1 = offs[4][1];
-  int dat4 = args[4].dat->elem_size;
-  int off5_0 = offs[5][0];
-  int off5_1 = offs[5][1];
-  int dat5 = args[5].dat->elem_size;
-  int off6_0 = offs[6][0];
-  int off6_1 = offs[6][1];
-  int dat6 = args[6].dat->elem_size;
 
   //set up initial pointers and exchange halos if necessary
-  int d_m[OPS_MAX_DIM];
-  #ifdef OPS_MPI
-  for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d] + OPS_sub_dat_list[args[0].dat->index]->d_im[d];
-  #else //OPS_MPI
-  for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d];
-  #endif //OPS_MPI
-  int base0 = dat0 * 1 *
-    (start[0] * args[0].stencil->stride[0] - args[0].dat->base[0] - d_m[0]);
-  base0 = base0+ dat0 *
-    args[0].dat->size[0] *
-    (start[1] * args[0].stencil->stride[1] - args[0].dat->base[1] - d_m[1]);
-  p_a[0] = (char *)args[0].data + base0;
+  int base0 = args[0].dat->base_offset;
+  double *p_a0 = (double *)(args[0].data + base0);
 
-  #ifdef OPS_MPI
-  for (int d = 0; d < dim; d++) d_m[d] = args[1].dat->d_m[d] + OPS_sub_dat_list[args[1].dat->index]->d_im[d];
-  #else //OPS_MPI
-  for (int d = 0; d < dim; d++) d_m[d] = args[1].dat->d_m[d];
-  #endif //OPS_MPI
-  int base1 = dat1 * 1 *
-    (start[0] * args[1].stencil->stride[0] - args[1].dat->base[0] - d_m[0]);
-  base1 = base1+ dat1 *
-    args[1].dat->size[0] *
-    (start[1] * args[1].stencil->stride[1] - args[1].dat->base[1] - d_m[1]);
-  p_a[1] = (char *)args[1].data + base1;
+  int base1 = args[1].dat->base_offset;
+  double *p_a1 = (double *)(args[1].data + base1);
 
-  #ifdef OPS_MPI
-  for (int d = 0; d < dim; d++) d_m[d] = args[2].dat->d_m[d] + OPS_sub_dat_list[args[2].dat->index]->d_im[d];
-  #else //OPS_MPI
-  for (int d = 0; d < dim; d++) d_m[d] = args[2].dat->d_m[d];
-  #endif //OPS_MPI
-  int base2 = dat2 * 1 *
-    (start[0] * args[2].stencil->stride[0] - args[2].dat->base[0] - d_m[0]);
-  base2 = base2+ dat2 *
-    args[2].dat->size[0] *
-    (start[1] * args[2].stencil->stride[1] - args[2].dat->base[1] - d_m[1]);
-  p_a[2] = (char *)args[2].data + base2;
+  int base2 = args[2].dat->base_offset;
+  double *p_a2 = (double *)(args[2].data + base2);
 
-  #ifdef OPS_MPI
-  for (int d = 0; d < dim; d++) d_m[d] = args[3].dat->d_m[d] + OPS_sub_dat_list[args[3].dat->index]->d_im[d];
-  #else //OPS_MPI
-  for (int d = 0; d < dim; d++) d_m[d] = args[3].dat->d_m[d];
-  #endif //OPS_MPI
-  int base3 = dat3 * 1 *
-    (start[0] * args[3].stencil->stride[0] - args[3].dat->base[0] - d_m[0]);
-  base3 = base3+ dat3 *
-    args[3].dat->size[0] *
-    (start[1] * args[3].stencil->stride[1] - args[3].dat->base[1] - d_m[1]);
-  p_a[3] = (char *)args[3].data + base3;
+  int base3 = args[3].dat->base_offset;
+  double *p_a3 = (double *)(args[3].data + base3);
 
-  #ifdef OPS_MPI
-  for (int d = 0; d < dim; d++) d_m[d] = args[4].dat->d_m[d] + OPS_sub_dat_list[args[4].dat->index]->d_im[d];
-  #else //OPS_MPI
-  for (int d = 0; d < dim; d++) d_m[d] = args[4].dat->d_m[d];
-  #endif //OPS_MPI
-  int base4 = dat4 * 1 *
-    (start[0] * args[4].stencil->stride[0] - args[4].dat->base[0] - d_m[0]);
-  base4 = base4+ dat4 *
-    args[4].dat->size[0] *
-    (start[1] * args[4].stencil->stride[1] - args[4].dat->base[1] - d_m[1]);
-  p_a[4] = (char *)args[4].data + base4;
+  int base4 = args[4].dat->base_offset;
+  double *p_a4 = (double *)(args[4].data + base4);
 
-  #ifdef OPS_MPI
-  for (int d = 0; d < dim; d++) d_m[d] = args[5].dat->d_m[d] + OPS_sub_dat_list[args[5].dat->index]->d_im[d];
-  #else //OPS_MPI
-  for (int d = 0; d < dim; d++) d_m[d] = args[5].dat->d_m[d];
-  #endif //OPS_MPI
-  int base5 = dat5 * 1 *
-    (start[0] * args[5].stencil->stride[0] - args[5].dat->base[0] - d_m[0]);
-  base5 = base5+ dat5 *
-    args[5].dat->size[0] *
-    (start[1] * args[5].stencil->stride[1] - args[5].dat->base[1] - d_m[1]);
-  p_a[5] = (char *)args[5].data + base5;
+  int base5 = args[5].dat->base_offset;
+  double *p_a5 = (double *)(args[5].data + base5);
 
-  #ifdef OPS_MPI
-  for (int d = 0; d < dim; d++) d_m[d] = args[6].dat->d_m[d] + OPS_sub_dat_list[args[6].dat->index]->d_im[d];
-  #else //OPS_MPI
-  for (int d = 0; d < dim; d++) d_m[d] = args[6].dat->d_m[d];
-  #endif //OPS_MPI
-  int base6 = dat6 * 1 *
-    (start[0] * args[6].stencil->stride[0] - args[6].dat->base[0] - d_m[0]);
-  base6 = base6+ dat6 *
-    args[6].dat->size[0] *
-    (start[1] * args[6].stencil->stride[1] - args[6].dat->base[1] - d_m[1]);
-  p_a[6] = (char *)args[6].data + base6;
+  int base6 = args[6].dat->base_offset;
+  double *p_a6 = (double *)(args[6].data + base6);
 
-  p_a[7] = args[7].data;
+  int *p_a7 = (int *)args[7].data;
 
 
 
@@ -242,52 +115,12 @@ void ops_par_loop_update_halo_kernel1_b2(char const *name, ops_block block, int 
 
   int n_x;
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
-    #pragma novector
-    for( n_x=start[0]; n_x<start[0]+((end[0]-start[0])/SIMD_VEC)*SIMD_VEC; n_x+=SIMD_VEC ) {
-      //call kernel function, passing in pointers to data -vectorised
-      #pragma simd
-      for ( int i=0; i<SIMD_VEC; i++ ){
-        update_halo_kernel1_b2(  (double *)p_a[0]+ i*1*1, (double *)p_a[1]+ i*1*1, (double *)p_a[2]+ i*1*1,
-           (double *)p_a[3]+ i*1*1, (double *)p_a[4]+ i*1*1, (double *)p_a[5]+ i*1*1, (double *)p_a[6]+ i*1*1,
-           (int *)p_a[7] );
+    for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
+      update_halo_kernel1_b2(  p_a0 + n_x*1*1 + n_y*xdim0*1*1,
+           p_a1 + n_x*1*1 + n_y*xdim1*1*1, p_a2 + n_x*1*1 + n_y*xdim2*1*1, p_a3 + n_x*1*1 + n_y*xdim3*1*1, p_a4 + n_x*1*1 + n_y*xdim4*1*1,
+           p_a5 + n_x*1*1 + n_y*xdim5*1*1, p_a6 + n_x*1*1 + n_y*xdim6*1*1, p_a7 );
 
-      }
-
-      //shift pointers to data x direction
-      p_a[0]= p_a[0] + (dat0 * off0_0)*SIMD_VEC;
-      p_a[1]= p_a[1] + (dat1 * off1_0)*SIMD_VEC;
-      p_a[2]= p_a[2] + (dat2 * off2_0)*SIMD_VEC;
-      p_a[3]= p_a[3] + (dat3 * off3_0)*SIMD_VEC;
-      p_a[4]= p_a[4] + (dat4 * off4_0)*SIMD_VEC;
-      p_a[5]= p_a[5] + (dat5 * off5_0)*SIMD_VEC;
-      p_a[6]= p_a[6] + (dat6 * off6_0)*SIMD_VEC;
     }
-
-    for ( int n_x=start[0]+((end[0]-start[0])/SIMD_VEC)*SIMD_VEC; n_x<end[0]; n_x++ ){
-      //call kernel function, passing in pointers to data - remainder
-      update_halo_kernel1_b2(  (double *)p_a[0], (double *)p_a[1], (double *)p_a[2],
-           (double *)p_a[3], (double *)p_a[4], (double *)p_a[5], (double *)p_a[6],
-           (int *)p_a[7] );
-
-
-      //shift pointers to data x direction
-      p_a[0]= p_a[0] + (dat0 * off0_0);
-      p_a[1]= p_a[1] + (dat1 * off1_0);
-      p_a[2]= p_a[2] + (dat2 * off2_0);
-      p_a[3]= p_a[3] + (dat3 * off3_0);
-      p_a[4]= p_a[4] + (dat4 * off4_0);
-      p_a[5]= p_a[5] + (dat5 * off5_0);
-      p_a[6]= p_a[6] + (dat6 * off6_0);
-    }
-
-    //shift pointers to data y direction
-    p_a[0]= p_a[0] + (dat0 * off0_1);
-    p_a[1]= p_a[1] + (dat1 * off1_1);
-    p_a[2]= p_a[2] + (dat2 * off2_1);
-    p_a[3]= p_a[3] + (dat3 * off3_1);
-    p_a[4]= p_a[4] + (dat4 * off4_1);
-    p_a[5]= p_a[5] + (dat5 * off5_1);
-    p_a[6]= p_a[6] + (dat6 * off6_1);
   }
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
@@ -314,4 +147,54 @@ void ops_par_loop_update_halo_kernel1_b2(char const *name, ops_block block, int 
     OPS_kernels[43].transfer += ops_compute_transfer(dim, start, end, &arg5);
     OPS_kernels[43].transfer += ops_compute_transfer(dim, start, end, &arg6);
   }
+}
+
+void ops_par_loop_update_halo_kernel1_b2(char const *name, ops_block block, int dim, int* range,
+ ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
+ ops_arg arg4, ops_arg arg5, ops_arg arg6, ops_arg arg7) {
+ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
+desc->name = name;
+desc->block = block;
+desc->dim = dim;
+#ifdef OPS_MPI
+sub_block_list sb = OPS_sub_block_list[block->index];
+if (!sb->owned) return;
+for ( int n=0; n<2; n++ ){
+  desc->range[2*n] = sb->decomp_disp[n];desc->range[2*n+1] = sb->decomp_disp[n]+sb->decomp_size[n];
+  if (desc->range[2*n] >= range[2*n]) {
+    desc->range[2*n] = 0;
+  }
+  else {
+    desc->range[2*n] = range[2*n] - desc->range[2*n];
+  }
+  if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) desc->range[2*n] = range[2*n];
+  if (desc->range[2*n+1] >= range[2*n+1]) {
+    desc->range[2*n+1] = range[2*n+1] - sb->decomp_disp[n];
+  }
+  else {
+    desc->range[2*n+1] = sb->decomp_size[n];
+  }
+  if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))
+    desc->range[2*n+1] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
+}
+#else //OPS_MPI
+for ( int i=0; i<4; i++ ){
+  desc->range[i] = range[i];
+}
+#endif //OPS_MPI
+desc->nargs = 8;
+desc->args = (ops_arg*)malloc(8*sizeof(ops_arg));
+desc->args[0] = arg0;
+desc->args[1] = arg1;
+desc->args[2] = arg2;
+desc->args[3] = arg3;
+desc->args[4] = arg4;
+desc->args[5] = arg5;
+desc->args[6] = arg6;
+desc->args[7] = arg7;
+char *tmp = (char*)malloc(NUM_FIELDS*sizeof(int));
+memcpy(tmp, arg7.data,NUM_FIELDS*sizeof(int));
+desc->args[7].data = tmp;
+desc->function = ops_par_loop_update_halo_kernel1_b2_execute;
+ops_enqueue_kernel(desc);
 }

@@ -3,7 +3,7 @@
 //
 #include "./OpenACC/clover_leaf_common.h"
 
-#define OPS_GPU
+#undef OPS_GPU
 
 int xdim0_PdV_kernel_predict;
 int xdim1_PdV_kernel_predict;

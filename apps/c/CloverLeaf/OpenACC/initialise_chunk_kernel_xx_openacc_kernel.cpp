@@ -3,7 +3,7 @@
 //
 #include "./OpenACC/clover_leaf_common.h"
 
-#define OPS_GPU
+#undef OPS_GPU
 
 extern int xdim0_initialise_chunk_kernel_xx;
 int xdim0_initialise_chunk_kernel_xx_h = -1;
@@ -89,21 +89,13 @@ void ops_par_loop_initialise_chunk_kernel_xx(char const *name, ops_block block, 
     xdim0_initialise_chunk_kernel_xx_h = xdim0;
   }
 
-  int dat0 = args[0].dat->elem_size;
 
 
   //set up initial pointers
-  int d_m[OPS_MAX_DIM];
-  #ifdef OPS_MPI
-  for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d] + OPS_sub_dat_list[args[0].dat->index]->d_im[d];
-  #else //OPS_MPI
-  for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d];
-  #endif //OPS_MPI
-  int base0 = dat0 * 1 *
-    (start[0] * args[0].stencil->stride[0] - args[0].dat->base[0] - d_m[0]);
-  base0 = base0+ dat0 *
+  int base0 = args[0].dat->base_offset + args[0].dat->elem_size * start[0] * args[0].stencil->stride[0];
+  base0 = base0 + args[0].dat->elem_size *
     args[0].dat->size[0] *
-    (start[1] * args[0].stencil->stride[1] - args[0].dat->base[1] - d_m[1]);
+    start[1] * args[0].stencil->stride[1];
   #ifdef OPS_GPU
   int *p_a0 = (int *)((char *)args[0].data_d + base0);
   #else

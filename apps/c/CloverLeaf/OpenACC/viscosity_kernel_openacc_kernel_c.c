@@ -3,7 +3,7 @@
 //
 #include "./OpenACC/clover_leaf_common.h"
 
-#define OPS_GPU
+#undef OPS_GPU
 
 int xdim0_viscosity_kernel;
 int xdim1_viscosity_kernel;

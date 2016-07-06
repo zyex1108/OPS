@@ -73,6 +73,15 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base, i
     dat->user_managed = 0;
     dat->mem = bytes;
   }
+
+  //Compute offset in bytes to the base index
+  dat->base_offset = 0;
+  long cumsize = 1;
+  for (int i=0; i<block->dims; i++) {
+    dat->base_offset += dat->elem_size * cumsize * (-dat->base[i] - dat->d_m[i]);
+    cumsize *= dat->size[i];
+  }
+
   return dat;
 }
 
@@ -83,7 +92,7 @@ ops_halo ops_decl_halo(ops_dat from, ops_dat to, int *iter_size, int* from_base,
 
 
 void ops_halo_transfer(ops_halo_group group) {
-
+	ops_execute();
   // Test contents of halo group
   /*ops_halo halo;
   for(int i = 0; i<group->nhalos; i++) {

@@ -156,6 +156,7 @@ typedef struct
   char const  *hdf5_file;  /* name of hdf5 file from which this dataset was read*/
   int         e_dat;    /* flag to indicate if this is an edge dat*/
   long        mem;  /*memory in bytes allocated to this dat (under MPI, this will be memory held on a single MPI proc)*/
+  long        base_offset; /* computed quantity, giving offset in bytes to the base index */
 } ops_dat_core;
 
 typedef ops_dat_core * ops_dat;
@@ -254,7 +255,7 @@ typedef ops_halo_group_core * ops_halo_group;
 
 typedef struct ops_kernel_descriptor
 {
-//  char        *name;     /* name of kernel */
+  const char  *name;     /* name of kernel */
   ops_arg     *args;     /* list of arguments to pass in */
   int         nargs;     /* number of arguments */
   int           dim;     /* number of dimensions */

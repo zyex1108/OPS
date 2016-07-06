@@ -3,7 +3,7 @@
 //
 #include "./OpenACC/poisson_common.h"
 
-#define OPS_GPU
+#undef OPS_GPU
 
 int xdim3_poisson_kernel_populate;
 int xdim4_poisson_kernel_populate;
