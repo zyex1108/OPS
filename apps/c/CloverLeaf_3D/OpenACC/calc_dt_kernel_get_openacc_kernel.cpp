@@ -3,7 +3,7 @@
 //
 #include "./OpenACC/clover_leaf_common.h"
 
-#define OPS_GPU
+#undef OPS_GPU
 
 extern int xdim0_calc_dt_kernel_get;
 int xdim0_calc_dt_kernel_get_h = -1;
@@ -110,9 +110,6 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
     ydim4_calc_dt_kernel_get_h = ydim4;
   }
 
-  int dat0 = args[0].dat->elem_size;
-  int dat1 = args[1].dat->elem_size;
-  int dat4 = args[4].dat->elem_size;
 
   #ifdef OPS_MPI
   double *arg2h = (double *)(((ops_reduction)args[2].data)->data + ((ops_reduction)args[2].data)->size * block->index);
@@ -131,41 +128,28 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
   #endif //OPS_MPI
 
   //set up initial pointers
-  int d_m[OPS_MAX_DIM];
-  #ifdef OPS_MPI
-  for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d] + OPS_sub_dat_list[args[0].dat->index]->d_im[d];
-  #else //OPS_MPI
-  for (int d = 0; d < dim; d++) d_m[d] = args[0].dat->d_m[d];
-  #endif //OPS_MPI
-  int base0 = dat0 * 1 *
-    (start[0] * args[0].stencil->stride[0] - args[0].dat->base[0] - d_m[0]);
-  base0 = base0+ dat0 *
+  int base0 = args[0].dat->base_offset + args[0].dat->elem_size * start[0] * args[0].stencil->stride[0];
+  base0 = base0 + args[0].dat->elem_size *
     args[0].dat->size[0] *
-    (start[1] * args[0].stencil->stride[1] - args[0].dat->base[1] - d_m[1]);
-  base0 = base0+ dat0 *
+    start[1] * args[0].stencil->stride[1];
+  base0 = base0 + args[0].dat->elem_size *
     args[0].dat->size[0] *
     args[0].dat->size[1] *
-    (start[2] * args[0].stencil->stride[2] - args[0].dat->base[2] - d_m[2]);
+    start[2] * args[0].stencil->stride[2];
   #ifdef OPS_GPU
   double *p_a0 = (double *)((char *)args[0].data_d + base0);
   #else
   double *p_a0 = (double *)((char *)args[0].data + base0);
   #endif
 
-  #ifdef OPS_MPI
-  for (int d = 0; d < dim; d++) d_m[d] = args[1].dat->d_m[d] + OPS_sub_dat_list[args[1].dat->index]->d_im[d];
-  #else //OPS_MPI
-  for (int d = 0; d < dim; d++) d_m[d] = args[1].dat->d_m[d];
-  #endif //OPS_MPI
-  int base1 = dat1 * 1 *
-    (start[0] * args[1].stencil->stride[0] - args[1].dat->base[0] - d_m[0]);
-  base1 = base1+ dat1 *
+  int base1 = args[1].dat->base_offset + args[1].dat->elem_size * start[0] * args[1].stencil->stride[0];
+  base1 = base1 + args[1].dat->elem_size *
     args[1].dat->size[0] *
-    (start[1] * args[1].stencil->stride[1] - args[1].dat->base[1] - d_m[1]);
-  base1 = base1+ dat1 *
+    start[1] * args[1].stencil->stride[1];
+  base1 = base1 + args[1].dat->elem_size *
     args[1].dat->size[0] *
     args[1].dat->size[1] *
-    (start[2] * args[1].stencil->stride[2] - args[1].dat->base[2] - d_m[2]);
+    start[2] * args[1].stencil->stride[2];
   #ifdef OPS_GPU
   double *p_a1 = (double *)((char *)args[1].data_d + base1);
   #else
@@ -174,20 +158,14 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
 
   double *p_a2 = arg2h;
   double *p_a3 = arg3h;
-  #ifdef OPS_MPI
-  for (int d = 0; d < dim; d++) d_m[d] = args[4].dat->d_m[d] + OPS_sub_dat_list[args[4].dat->index]->d_im[d];
-  #else //OPS_MPI
-  for (int d = 0; d < dim; d++) d_m[d] = args[4].dat->d_m[d];
-  #endif //OPS_MPI
-  int base4 = dat4 * 1 *
-    (start[0] * args[4].stencil->stride[0] - args[4].dat->base[0] - d_m[0]);
-  base4 = base4+ dat4 *
+  int base4 = args[4].dat->base_offset + args[4].dat->elem_size * start[0] * args[4].stencil->stride[0];
+  base4 = base4 + args[4].dat->elem_size *
     args[4].dat->size[0] *
-    (start[1] * args[4].stencil->stride[1] - args[4].dat->base[1] - d_m[1]);
-  base4 = base4+ dat4 *
+    start[1] * args[4].stencil->stride[1];
+  base4 = base4 + args[4].dat->elem_size *
     args[4].dat->size[0] *
     args[4].dat->size[1] *
-    (start[2] * args[4].stencil->stride[2] - args[4].dat->base[2] - d_m[2]);
+    start[2] * args[4].stencil->stride[2];
   #ifdef OPS_GPU
   double *p_a4 = (double *)((char *)args[4].data_d + base4);
   #else
