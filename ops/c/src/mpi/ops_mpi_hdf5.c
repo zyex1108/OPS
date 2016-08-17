@@ -1518,6 +1518,7 @@ void ops_read_dat_hdf5(ops_dat dat) {
       // printf("dat->d_p[%d] = %d ",d,g_d_p[d]);
     }
 
+    int t_size = 1;
     for (int d = 0; d < dat->block->dims; d++) t_size *= size[d];
     //printf("t_size = %d ",t_size);
     char* data = (char *)ops_malloc(t_size*dat->elem_size);
